@@ -927,7 +927,7 @@
     <div id="scene-area"></div>
     <div id="portrait-strip" class="portrait-strip"></div>
     <div class="day-header" id="day-header">第 0 天</div>
-    <div class="story-text" id="story-text" onclick="skipTypewriter()" style="cursor:pointer"></div>
+    <div class="story-text" id="story-text"></div>
   </div>
 
   <!-- Choices -->
@@ -4696,6 +4696,12 @@ window.addEventListener('DOMContentLoaded', () => {
     overlay.addEventListener('click', e => {
       if (e.target === overlay) overlay.classList.remove('open');
     });
+  });
+
+  // Click anywhere (except buttons/modals) to skip typewriter
+  document.addEventListener('click', e => {
+    if (e.target.closest('button, .choice-btn, .modal-overlay, .menu-btn, .slot-btn, .title-btn, .achv-filter')) return;
+    skipTypewriter();
   });
 });
 </script>
