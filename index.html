@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>惊变100天</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -28,6 +28,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
 
   /* ===== TITLE SCREEN ===== */
@@ -412,6 +413,10 @@
     position: relative;
     aspect-ratio: 3/1;
     background: #080808;
+    transition: opacity 0.4s ease;
+  }
+  .scene-container.fade-out {
+    opacity: 0;
   }
   .scene-container svg {
     width: 100%;
@@ -519,6 +524,26 @@
     cursor: not-allowed;
     pointer-events: none;
     border-style: dashed;
+  }
+
+  /* Choice entrance animation */
+  .choice-btn.animate-in {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: choiceAppear 0.4s ease forwards;
+  }
+  @keyframes choiceAppear {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Choice selection feedback */
+  .choice-btn.selected {
+    border-color: var(--rust);
+    background: rgba(204, 85, 0, 0.15);
+  }
+  .choices-area.fade-out {
+    opacity: 0;
+    transition: opacity 0.3s;
   }
 
   .choice-num {
@@ -802,10 +827,52 @@
   ::-webkit-scrollbar-thumb:hover { background: var(--dark-red); }
 
   @media (max-width: 600px) {
+    /* 标题屏幕 */
+    .title-glow { font-size: clamp(1.8rem, 7vw, 2.5rem); }
+
+    /* 顶部栏 */
+    .top-bar { padding: 0.3em 0.5em; }
     .top-title { font-size: 1rem; }
-    .story-text { font-size: 0.88rem; }
-    .choice-btn { font-size: 0.85rem; padding: 0.8em 1em; }
-    .status-bar { font-size: 0.78rem; gap: 0.6em 1em; }
+    .menu-btn { width: 40px; height: 40px; font-size: 1.1rem; }
+
+    /* 状态栏 */
+    .status-bar { font-size: 0.78rem; gap: 0.4em 0.8em; padding: 0.4em 0.8em; }
+
+    /* 场景图 */
+    .scene-container { aspect-ratio: 2.5/1; }
+
+    /* 同伴头像 */
+    .portrait-frame { width: 40px; height: 40px; }
+    .portrait-name { font-size: 0.6rem; }
+
+    /* 故事文本 */
+    .story-text { font-size: 0.88rem; line-height: 1.9; padding: 0 0.5em; }
+
+    /* 选项按钮 - 增大触摸区域 */
+    .choice-btn { font-size: 0.85rem; padding: 1em 1em; min-height: 48px; }
+
+    /* 弹窗 */
+    .modal-box { padding: 1.2em; max-width: 95vw; }
+    .modal-close { font-size: 1.6rem; width: 40px; height: 40px; }
+    .history-grid, .achv-grid { max-height: 70vh; }
+
+    /* 通知位置 */
+    #notification-container { top: auto; bottom: 1em; right: 0.5em; left: 0.5em; }
+    .notif { white-space: normal; font-size: 0.8rem; }
+
+    /* 死亡画面 */
+    .death-overlay .death-box { padding: 1.5em; }
+
+    /* 结算画面 */
+    .end-section { padding: 1em 0.5em; }
+  }
+
+  /* 减少动画偏好 */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 </style>
 </head>
@@ -2125,13 +2192,37 @@ function flashStat(id, direction) {
   setTimeout(() => el.classList.remove('flash-up', 'flash-down'), 900);
 }
 
+function animateValue(el, start, end, duration) {
+  if (start === end) { el.textContent = end; return; }
+  const range = end - start;
+  const startTime = performance.now();
+  function step(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    el.textContent = Math.round(start + range * progress);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
 function updateStatusBar() {
   const h = document.getElementById('stat-humanity');
   const s = document.getElementById('stat-supplies');
   const a = document.getElementById('stat-ammo');
-  if (h) h.textContent = G.humanity;
-  if (s) s.textContent = G.supplies;
-  if (a) a.textContent = G.ammo;
+  if (h) {
+    const oldH = parseInt(h.textContent) || 0;
+    if (oldH !== G.humanity) animateValue(h, oldH, G.humanity, 400);
+    else h.textContent = G.humanity;
+  }
+  if (s) {
+    const oldS = parseInt(s.textContent) || 0;
+    if (oldS !== G.supplies) animateValue(s, oldS, G.supplies, 400);
+    else s.textContent = G.supplies;
+  }
+  if (a) {
+    const oldA = parseInt(a.textContent) || 0;
+    if (oldA !== G.ammo) animateValue(a, oldA, G.ammo, 400);
+    else a.textContent = G.ammo;
+  }
 
   // Danger warnings
   if (a) {
@@ -2222,13 +2313,18 @@ function typewriterText(text, container, onDone) {
       currentP.appendChild(cursor);
     } else if (item.type === 'para-end') {
       if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+      typewriterTimer = setTimeout(step, 300);
+      return;
     } else {
       if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
       currentP.appendChild(document.createTextNode(item.ch));
       currentP.appendChild(cursor);
     }
 
-    typewriterTimer = setTimeout(step, 30);
+    let delay = 30;
+    if (item.type === 'char' && '。！？…——'.includes(item.ch)) delay = 130;
+    else if (item.type === 'char' && '，；：、'.includes(item.ch)) delay = 80;
+    typewriterTimer = setTimeout(step, delay);
   }
 
   step();
@@ -2358,6 +2454,9 @@ function renderNode(nodeId) {
     return;
   }
 
+  // Scroll to top
+  document.getElementById('story-text').scrollIntoView({ behavior: 'smooth' });
+
   // Typewriter
   const storyDiv = document.getElementById('story-text');
   typewriterText(node.text, storyDiv, () => {
@@ -2367,10 +2466,12 @@ function renderNode(nodeId) {
 
 function renderChoices(choices, container) {
   container.innerHTML = '';
+  container.classList.remove('fade-out');
   choices.forEach((choice, idx) => {
     const available = checkCondition(choice.condition, G);
     const btn = document.createElement('button');
-    btn.className = 'choice-btn' + (available ? '' : ' disabled');
+    btn.className = 'choice-btn animate-in' + (available ? '' : ' disabled');
+    btn.style.animationDelay = (idx * 0.1) + 's';
 
     const numSpan = document.createElement('span');
     numSpan.className = 'choice-num';
@@ -2391,39 +2492,46 @@ function renderChoices(choices, container) {
         if (!typewriterDone) skipTypewriter();
 
         playSFX('click');
-        // Record choice to history
-        if (historyLog.length > 0) {
-          historyLog[historyLog.length - 1].choiceText = choice.text;
-        }
 
-        // Apply effects
-        const prevH = G.humanity, prevS = G.supplies, prevA = G.ammo;
-        const changes = applyEffects(choice.effects, G);
+        // Selection feedback
+        btn.classList.add('selected');
+        container.classList.add('fade-out');
 
-        // Flash stats
-        if (G.humanity > prevH) flashStat('stat-humanity', 'up');
-        else if (G.humanity < prevH) flashStat('stat-humanity', 'down');
-        if (G.supplies > prevS) flashStat('stat-supplies', 'up');
-        else if (G.supplies < prevS) flashStat('stat-supplies', 'down');
-        if (G.ammo > prevA) flashStat('stat-ammo', 'up');
-        else if (G.ammo < prevA) flashStat('stat-ammo', 'down');
+        setTimeout(() => {
+          // Record choice to history
+          if (historyLog.length > 0) {
+            historyLog[historyLog.length - 1].choiceText = choice.text;
+          }
 
-        updateStatusBar();
-        showNotifications(changes);
-        checkAndUnlockAchievements();
+          // Apply effects
+          const prevH = G.humanity, prevS = G.supplies, prevA = G.ammo;
+          const changes = applyEffects(choice.effects, G);
 
-        // Death check: ammo=0 random zombie encounter (15% chance per node transition)
-        if (G.ammo <= 0 && Math.random() < 0.15 && G.day > 0) {
-          triggerDeath('zombie');
-          return;
-        }
-        // Death check: supplies=0
-        if (G.supplies <= 0) {
-          triggerDeath('starvation');
-          return;
-        }
+          // Flash stats
+          if (G.humanity > prevH) flashStat('stat-humanity', 'up');
+          else if (G.humanity < prevH) flashStat('stat-humanity', 'down');
+          if (G.supplies > prevS) flashStat('stat-supplies', 'up');
+          else if (G.supplies < prevS) flashStat('stat-supplies', 'down');
+          if (G.ammo > prevA) flashStat('stat-ammo', 'up');
+          else if (G.ammo < prevA) flashStat('stat-ammo', 'down');
 
-        renderNode(choice.next);
+          updateStatusBar();
+          showNotifications(changes);
+          checkAndUnlockAchievements();
+
+          // Death check: ammo=0 random zombie encounter (15% chance per node transition)
+          if (G.ammo <= 0 && Math.random() < 0.15 && G.day > 0) {
+            triggerDeath('zombie');
+            return;
+          }
+          // Death check: supplies=0
+          if (G.supplies <= 0) {
+            triggerDeath('starvation');
+            return;
+          }
+
+          renderNode(choice.next);
+        }, 300);
       };
     }
 
@@ -2699,10 +2807,12 @@ function switchSaveTab(tab) {
 // ============================================================
 function openModal(id) {
   document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
 
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 function openAbout() {
@@ -4096,7 +4206,17 @@ function renderScene(nodeId) {
 
   const sceneKey = NODE_SCENES[nodeId] || 'city_ruins';
   const svg = SCENE_SVGS[sceneKey] || SCENE_SVGS.city_ruins;
-  sceneArea.innerHTML = '<div class="scene-container">' + svg + '</div>';
+
+  // Fade transition
+  const existing = sceneArea.querySelector('.scene-container');
+  if (existing) {
+    existing.classList.add('fade-out');
+    setTimeout(() => {
+      sceneArea.innerHTML = '<div class="scene-container">' + svg + '</div>';
+    }, 400);
+  } else {
+    sceneArea.innerHTML = '<div class="scene-container">' + svg + '</div>';
+  }
 
   if (G.companions && G.companions.length > 0) {
     portraitStrip.innerHTML = '';
