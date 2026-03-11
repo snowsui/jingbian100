@@ -1,0 +1,4703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>惊变100天</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0a;
+    --dark-red: #8b0000;
+    --rust: #cc5500;
+    --text: #d4d4d4;
+    --text-dim: #888;
+    --panel: #111111;
+    --border: #2a1a0a;
+    --green: #4caf50;
+    --red: #e53935;
+  }
+
+  body {
+    background-color: var(--bg);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    color: var(--text);
+    font-family: 'Courier New', 'SimSun', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ===== TITLE SCREEN ===== */
+  #title-screen {
+    position: fixed;
+    inset: 0;
+    background: #050505;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E");
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transition: opacity 0.8s ease;
+  }
+
+  #title-screen.fade-out {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .title-glow {
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: bold;
+    color: var(--dark-red);
+    text-shadow: 0 0 20px #8b000088, 0 0 60px #8b000044, 0 0 100px #8b000022;
+    letter-spacing: 0.15em;
+    margin-bottom: 0.3em;
+    animation: flicker 4s infinite;
+  }
+
+  @keyframes flicker {
+    0%,100%{opacity:1;text-shadow:0 0 20px #8b000088,0 0 60px #8b000044;}
+    92%{opacity:1;}
+    93%{opacity:0.85;}
+    94%{opacity:1;}
+    96%{opacity:0.9;}
+    97%{opacity:1;}
+  }
+
+  .title-subtitle {
+    font-size: clamp(0.75rem, 2.5vw, 1rem);
+    color: var(--text-dim);
+    letter-spacing: 0.4em;
+    margin-bottom: 4em;
+    text-transform: uppercase;
+  }
+
+  .title-blood-line {
+    width: 200px;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--dark-red), transparent);
+    margin: 1em auto 3em;
+    animation: bloodPulse 3s ease-in-out infinite;
+  }
+  @keyframes bloodPulse {
+    0%,100%{opacity:0.6;width:200px;}
+    50%{opacity:1;width:260px;}
+  }
+
+  .title-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    align-items: center;
+  }
+
+  .title-btn {
+    background: transparent;
+    border: 1px solid var(--dark-red);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 1.1rem;
+    padding: 0.7em 2.5em;
+    cursor: pointer;
+    letter-spacing: 0.2em;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    min-width: 200px;
+  }
+
+  .title-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--dark-red);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+    z-index: -1;
+  }
+
+  .title-btn:hover::before { transform: scaleX(1); }
+  .title-btn:hover { color: #fff; border-color: var(--rust); box-shadow: 0 0 20px #8b000066; }
+  .title-btn:active { transform: scale(0.97); }
+
+  .title-about {
+    margin-top: 3em;
+    font-size: 0.75rem;
+    color: #444;
+    text-align: center;
+    line-height: 2;
+  }
+
+  /* ===== ABOUT MODAL ===== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal-box {
+    background: #111;
+    border: 1px solid var(--dark-red);
+    padding: 2em;
+    max-width: 480px;
+    width: 90%;
+    position: relative;
+    box-shadow: 0 0 40px #8b000033;
+  }
+
+  .modal-title {
+    font-size: 1.2rem;
+    color: var(--rust);
+    margin-bottom: 1em;
+    letter-spacing: 0.15em;
+    border-bottom: 1px solid #2a1a0a;
+    padding-bottom: 0.5em;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 1em;
+    right: 1em;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .modal-close:hover { color: var(--rust); }
+
+  .modal-text {
+    font-size: 0.9rem;
+    line-height: 1.9;
+    color: var(--text-dim);
+  }
+
+  /* ===== SAVE/LOAD MODAL ===== */
+  .save-slot {
+    border: 1px solid #2a2a2a;
+    padding: 1em;
+    margin: 0.6em 0;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5em;
+  }
+  .save-slot:hover { border-color: var(--rust); background: #1a1a1a; }
+  .save-slot-info { flex: 1; }
+  .save-slot-name { font-size: 0.9rem; color: var(--text); }
+  .save-slot-meta { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.2em; }
+  .save-slot-actions { display: flex; gap: 0.4em; }
+  .slot-btn {
+    background: none;
+    border: 1px solid #444;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 0.75rem;
+    padding: 0.3em 0.6em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .slot-btn:hover { border-color: var(--rust); color: var(--rust); }
+  .slot-btn.danger:hover { border-color: var(--red); color: var(--red); }
+
+  .modal-tab-bar {
+    display: flex;
+    gap: 0;
+    margin-bottom: 1.2em;
+    border-bottom: 1px solid #222;
+  }
+  .modal-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 0.5em 1.2em;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: -1px;
+  }
+  .modal-tab.active { color: var(--rust); border-bottom-color: var(--rust); }
+  .modal-tab:hover:not(.active) { color: var(--text); }
+
+  /* ===== GAME SCREEN ===== */
+  #game-screen {
+    width: 100%;
+    max-width: 800px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 2em;
+  }
+
+  /* Top Bar */
+  .top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(4px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.7em 1.2em;
+  }
+
+  .top-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--dark-red);
+    letter-spacing: 0.15em;
+    text-shadow: 0 0 10px #8b000066;
+  }
+
+  .menu-btn {
+    background: none;
+    border: 1px solid #333;
+    color: var(--text-dim);
+    font-size: 1.2rem;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .menu-btn:hover { border-color: var(--rust); color: var(--rust); }
+
+  /* Status Bar */
+  .status-bar {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 0.7em 1.2em;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8em 1.5em;
+    align-items: center;
+    font-size: 0.82rem;
+  }
+
+  .stat {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+  }
+
+  .stat-icon { font-size: 0.9em; }
+  .stat-label { color: var(--text-dim); }
+  .stat-value {
+    font-weight: bold;
+    color: var(--text);
+    transition: color 0.3s;
+    min-width: 2em;
+    text-align: right;
+  }
+  .stat-value.flash-up { color: var(--green); animation: flashUp 0.8s ease; }
+  .stat-value.flash-down { color: var(--red); animation: flashDown 0.8s ease; }
+  .stat-value.danger { color: var(--red); animation: blink 1s infinite; }
+  .stat-warning { color: var(--red); font-size: 0.7em; animation: blink 1s infinite; margin-left: 0.2em; }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  @keyframes flashUp {
+    0%{transform:scale(1.3);color:var(--green);}
+    100%{transform:scale(1);color:var(--text);}
+  }
+  @keyframes flashDown {
+    0%{transform:scale(1.3);color:var(--red);}
+    100%{transform:scale(1);color:var(--text);}
+  }
+
+  .companions-display {
+    display: flex;
+    gap: 0.4em;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .companion-tag {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 2px;
+    padding: 0.1em 0.5em;
+    font-size: 0.78rem;
+    color: #aaa;
+    animation: tagAppear 0.4s ease;
+  }
+  @keyframes tagAppear {
+    from{opacity:0;transform:scale(0.8);}
+    to{opacity:1;transform:scale(1);}
+  }
+
+  /* Content Area */
+  .content-area {
+    flex: 1;
+    padding: 1.5em 1.2em;
+  }
+
+  .day-header {
+    font-size: 0.8rem;
+    color: var(--rust);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-bottom: 1em;
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+  }
+  .day-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--dark-red), transparent);
+  }
+
+  .story-text {
+    font-size: 0.95rem;
+    line-height: 2;
+    color: var(--text);
+    margin-bottom: 2em;
+    min-height: 100px;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+  }
+
+  .story-text p { margin-bottom: 1em; }
+
+  .cursor-blink {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: var(--rust);
+    margin-left: 2px;
+    animation: blink 0.7s step-end infinite;
+    vertical-align: text-bottom;
+  }
+  @keyframes blink {
+    0%,100%{opacity:1;}
+    50%{opacity:0;}
+  }
+
+  /* Scene Illustration */
+  .scene-container {
+    width: 100%;
+    margin-bottom: 1em;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 3/1;
+    background: #080808;
+  }
+  .scene-container svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .portrait-strip {
+    display: flex;
+    gap: 0.5em;
+    margin-bottom: 0.8em;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .portrait-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2em;
+  }
+  .portrait-frame {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid #333;
+    overflow: hidden;
+    background: #111;
+  }
+  .portrait-frame svg { width: 100%; height: 100%; }
+  .portrait-frame.active { border-color: var(--rust); }
+  .portrait-name {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  @keyframes smoke-drift {
+    0%   { transform: translateX(0) translateY(0) scaleX(1); opacity: 0.5; }
+    50%  { transform: translateX(6px) translateY(-8px) scaleX(1.2); opacity: 0.3; }
+    100% { transform: translateX(12px) translateY(-16px) scaleX(0.8); opacity: 0; }
+  }
+  @keyframes flicker {
+    0%,100% { opacity: 0.9; }
+    30%      { opacity: 0.5; }
+    60%      { opacity: 0.8; }
+  }
+  @keyframes pulse-glow {
+    0%,100% { opacity: 0.4; }
+    50%      { opacity: 0.7; }
+  }
+  @keyframes star-twinkle {
+    0%,100% { opacity: 0.8; }
+    50%      { opacity: 0.2; }
+  }
+  .anim-smoke { animation: smoke-drift 4s ease-out infinite; }
+  .anim-smoke2 { animation: smoke-drift 5s ease-out 1.5s infinite; }
+  .anim-flicker { animation: flicker 2s step-start infinite; }
+  .anim-glow { animation: pulse-glow 3s ease-in-out infinite; }
+  .anim-star1 { animation: star-twinkle 2.1s ease-in-out infinite; }
+  .anim-star2 { animation: star-twinkle 3.4s ease-in-out 0.8s infinite; }
+  .anim-star3 { animation: star-twinkle 2.8s ease-in-out 1.6s infinite; }
+
+  /* Choices */
+  .choices-area {
+    padding: 0 1.2em;
+  }
+
+  .choice-btn {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: 1px solid #333;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 0.9em 1.2em;
+    margin-bottom: 0.7em;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+    line-height: 1.5;
+  }
+
+  .choice-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--dark-red) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  .choice-btn:hover {
+    border-color: var(--rust);
+    color: #fff;
+    box-shadow: 0 0 15px #8b000033, inset 0 0 10px #8b000022;
+    transform: translateX(3px);
+  }
+  .choice-btn:hover::before { opacity: 0.15; }
+  .choice-btn:active { transform: scale(0.99) translateX(3px); }
+
+  .choice-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+    border-style: dashed;
+  }
+
+  .choice-num {
+    color: var(--rust);
+    font-weight: bold;
+    margin-right: 0.7em;
+  }
+
+  .choice-condition {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 0.3em;
+    display: block;
+  }
+
+  /* Notification */
+  #notification-container {
+    position: fixed;
+    top: 80px;
+    right: 1em;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4em;
+    pointer-events: none;
+  }
+
+  .notif {
+    background: rgba(10,10,10,0.95);
+    border-left: 3px solid var(--green);
+    padding: 0.4em 0.8em;
+    font-size: 0.82rem;
+    animation: notifIn 0.3s ease, notifOut 0.4s ease 1.8s forwards;
+    white-space: nowrap;
+  }
+  .notif.neg { border-left-color: var(--red); color: var(--red); }
+  .notif.pos { border-left-color: var(--green); color: var(--green); }
+  .notif.info { border-left-color: var(--rust); color: var(--rust); }
+
+  @keyframes notifIn {
+    from{opacity:0;transform:translateX(20px);}
+    to{opacity:1;transform:translateX(0);}
+  }
+  @keyframes notifOut {
+    from{opacity:1;transform:translateX(0);}
+    to{opacity:0;transform:translateX(20px);}
+  }
+
+  /* End Screen */
+  .end-section {
+    padding: 1em;
+  }
+  .end-title {
+    font-size: 1.4rem;
+    color: var(--rust);
+    margin-bottom: 0.5em;
+    text-align: center;
+    letter-spacing: 0.2em;
+  }
+  .end-stats {
+    border: 1px solid #222;
+    padding: 1em;
+    margin: 1em 0;
+    background: #0d0d0d;
+  }
+  .end-stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.4em 0;
+    border-bottom: 1px solid #1a1a1a;
+    font-size: 0.9rem;
+  }
+  .end-stat-row:last-child { border-bottom: none; }
+  .end-stat-label { color: var(--text-dim); }
+  .end-stat-val { color: var(--text); }
+
+  .token-list {
+    margin: 1em 0;
+  }
+  .token-item {
+    border: 1px solid #2a1a0a;
+    padding: 0.8em;
+    margin-bottom: 0.5em;
+    background: #0d0d0d;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1em;
+  }
+  .token-name { color: var(--rust); font-size: 0.9rem; }
+  .token-desc { color: var(--text-dim); font-size: 0.8rem; margin-top: 0.2em; }
+  .token-score { color: var(--green); font-size: 0.9rem; font-weight: bold; white-space: nowrap; }
+  .total-score { font-size: 1.1rem; color: var(--rust); text-align: right; margin-top: 1em; }
+
+  /* Death Screen */
+  .death-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    animation: deathFadeIn 1.5s ease;
+    padding: 2em;
+  }
+  @keyframes deathFadeIn {
+    from { opacity: 0; }
+    50% { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .death-title {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    color: var(--dark-red);
+    text-shadow: 0 0 30px #8b000088;
+    letter-spacing: 0.3em;
+    margin-bottom: 0.5em;
+    animation: deathPulse 2s ease-in-out infinite;
+  }
+  @keyframes deathPulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  .death-reason {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    line-height: 1.8;
+    text-align: center;
+    max-width: 500px;
+    margin-bottom: 2em;
+  }
+  .death-stats {
+    color: #555;
+    font-size: 0.8rem;
+    margin-bottom: 2em;
+  }
+  .death-btn {
+    background: transparent;
+    border: 1px solid var(--dark-red);
+    color: var(--dark-red);
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 0.7em 2.5em;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 0.3em;
+  }
+  .death-btn:hover {
+    background: var(--dark-red);
+    color: #fff;
+    box-shadow: 0 0 20px #8b000044;
+  }
+
+  /* History Log */
+  .history-grid {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 0.3em;
+  }
+  .history-entry {
+    border-bottom: 1px solid #1a1a1a;
+    padding: 0.7em 0;
+  }
+  .history-entry:last-child { border-bottom: none; }
+  .history-day {
+    font-size: 0.75rem;
+    color: var(--rust);
+    margin-bottom: 0.3em;
+    letter-spacing: 0.1em;
+  }
+  .history-text {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .history-entry.expanded .history-text {
+    -webkit-line-clamp: unset;
+  }
+  .history-choice {
+    font-size: 0.75rem;
+    color: #666;
+    margin-top: 0.3em;
+    font-style: italic;
+  }
+  .history-expand {
+    font-size: 0.7rem;
+    color: #555;
+    cursor: pointer;
+    margin-top: 0.2em;
+    display: inline-block;
+  }
+  .history-expand:hover { color: var(--rust); }
+
+  /* Achievement System */
+  .achv-grid {
+    display: grid;
+    gap: 0.6em;
+    max-height: 55vh;
+    overflow-y: auto;
+    padding-right: 0.3em;
+  }
+  .achv-card {
+    border: 1px solid #222;
+    background: #0d0d0d;
+    padding: 0.7em 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+    transition: border-color 0.3s;
+  }
+  .achv-card.unlocked { border-color: var(--rust); }
+  .achv-card.locked { opacity: 0.45; filter: grayscale(1); }
+  .achv-icon {
+    font-size: 1.6rem;
+    min-width: 2em;
+    text-align: center;
+    line-height: 1;
+  }
+  .achv-info { flex: 1; min-width: 0; }
+  .achv-name { font-size: 0.88rem; color: var(--text); font-weight: bold; }
+  .achv-card.locked .achv-name { color: var(--text-dim); }
+  .achv-desc { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.15em; }
+  .achv-card.locked .achv-desc { color: #444; }
+  .achv-badge {
+    font-size: 0.7rem;
+    padding: 0.15em 0.5em;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .achv-badge.done { background: #1a2e1a; color: var(--green); }
+  .achv-badge.lock { background: #1a1a1a; color: #555; }
+  .achv-progress-bar {
+    margin-top: 0.8em;
+    padding-top: 0.8em;
+    border-top: 1px solid #1a1a1a;
+    text-align: center;
+  }
+  .achv-progress-text { font-size: 0.82rem; color: var(--text-dim); }
+  .achv-progress-text b { color: var(--rust); }
+  .achv-bar-bg {
+    height: 4px;
+    background: #1a1a1a;
+    border-radius: 2px;
+    margin-top: 0.5em;
+    overflow: hidden;
+  }
+  .achv-bar-fill {
+    height: 100%;
+    background: linear-gradient(to right, var(--dark-red), var(--rust));
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+  .achv-filter-bar {
+    display: flex;
+    gap: 0.5em;
+    margin-bottom: 0.8em;
+    flex-wrap: wrap;
+  }
+  .achv-filter {
+    background: transparent;
+    border: 1px solid #333;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 0.75rem;
+    padding: 0.25em 0.6em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .achv-filter.active { border-color: var(--rust); color: var(--rust); }
+  .achv-filter:hover { border-color: var(--text-dim); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--dark-red); }
+
+  @media (max-width: 600px) {
+    .top-title { font-size: 1rem; }
+    .story-text { font-size: 0.88rem; }
+    .choice-btn { font-size: 0.85rem; padding: 0.8em 1em; }
+    .status-bar { font-size: 0.78rem; gap: 0.6em 1em; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TITLE SCREEN -->
+<div id="title-screen">
+  <div class="title-glow">惊变100天</div>
+  <div class="title-subtitle">Survival · Choice · Humanity</div>
+  <div class="title-blood-line"></div>
+  <div class="title-menu">
+    <button class="title-btn" onclick="startNewGame()">开始游戏</button>
+    <button class="title-btn" id="continue-btn" onclick="openContinueFromTitle()" style="display:none">继续游戏</button>
+    <button class="title-btn" onclick="openAchievements()">成　　就</button>
+    <button class="title-btn" onclick="openAbout()">关　　于</button>
+    <button class="title-btn" id="music-toggle-title" onclick="toggleMusic()" style="font-size:0.85rem;padding:0.5em 1.5em;margin-top:0.5em">🔇 音乐：关</button>
+  </div>
+  <div class="title-about">
+    完整版 · 100天<br>
+    一场改变一切的病毒，一段关于选择与代价的旅程<br>
+    <span style="color:#333">▼ 你的每一个决定都会产生后果 ▼</span>
+  </div>
+</div>
+
+<!-- ABOUT MODAL -->
+<div class="modal-overlay" id="about-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('about-modal')">✕</button>
+    <div class="modal-title">关于本作</div>
+    <div class="modal-text">
+      <b style="color:var(--rust)">惊变100天</b> 是一部中文末世文字冒险游戏。<br><br>
+      病毒在一夜之间改变了世界。你是少数幸存者之一，必须在这片废土上做出艰难的抉择——相信还是怀疑，慷慨还是自私，勇敢还是懦弱。<br><br>
+      <b>完整故事</b>横跨灾变后0至100天，涵盖三章剧情。第一章（第0-30天）是绝境求生的序章；第二章（第30-80天）将面对规模空前的兽潮、同伴的秘密与道德抉择；第三章（第80-100天）通向三条截然不同的结局——救世主、新伊甸或独狼。<br><br>
+      <span style="color:#555">— 操作提示 —</span><br>
+      · 点击故事文本可跳过打字动画<br>
+      · 右上角菜单可存读档（3个存档位）<br>
+      · 自动存档会在每个关键节点触发<br>
+      · 部分选项需要特定条件才能解锁
+    </div>
+  </div>
+</div>
+
+<!-- SAVE/LOAD MODAL -->
+<div class="modal-overlay" id="save-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('save-modal')">✕</button>
+    <div class="modal-title">存档管理</div>
+    <div class="modal-tab-bar">
+      <button class="modal-tab active" onclick="switchSaveTab('save')">保存</button>
+      <button class="modal-tab" onclick="switchSaveTab('load')">读取</button>
+    </div>
+    <div id="save-slots-container"></div>
+    <div style="margin-top:1.2em;border-top:1px solid #1a1a1a;padding-top:1em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:0.5em;">
+      <button class="slot-btn danger" onclick="confirmRestart()">重新开始</button>
+      <button class="slot-btn" onclick="closeModal('save-modal')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY LOG MODAL -->
+<div class="modal-overlay" id="history-modal">
+  <div class="modal-box" style="max-width:550px">
+    <button class="modal-close" onclick="closeModal('history-modal')">✕</button>
+    <div class="modal-title">文字回顾</div>
+    <div class="history-grid" id="history-grid"></div>
+  </div>
+</div>
+
+<!-- ACHIEVEMENT MODAL -->
+<div class="modal-overlay" id="achv-modal">
+  <div class="modal-box" style="max-width:520px">
+    <button class="modal-close" onclick="closeModal('achv-modal')">✕</button>
+    <div class="modal-title">成就总览</div>
+    <div class="achv-filter-bar" id="achv-filters"></div>
+    <div class="achv-grid" id="achv-grid"></div>
+    <div class="achv-progress-bar" id="achv-progress"></div>
+  </div>
+</div>
+
+<!-- DEATH SCREEN (injected dynamically) -->
+<div id="death-container"></div>
+
+<!-- NOTIFICATION CONTAINER -->
+<div id="notification-container"></div>
+
+<!-- GAME SCREEN -->
+<div id="game-screen" style="display:none">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="top-title">惊变100天</div>
+    <button class="menu-btn" id="music-toggle-game" onclick="toggleMusic()" title="音乐" style="margin-right:0.3em;font-size:1rem">🔇</button>
+    <button class="menu-btn" onclick="openHistoryLog()" title="回顾" style="margin-right:0.3em;font-size:1rem">📜</button>
+    <button class="menu-btn" onclick="openAchievements()" title="成就" style="margin-right:0.3em;font-size:1rem">🏆</button>
+    <button class="menu-btn" onclick="openSaveModal()" title="菜单">☰</button>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div class="stat">
+      <span class="stat-icon">❤</span>
+      <span class="stat-label">人性</span>
+      <span class="stat-value" id="stat-humanity">50</span>
+    </div>
+    <div class="stat">
+      <span class="stat-icon">⊕</span>
+      <span class="stat-label">物资</span>
+      <span class="stat-value" id="stat-supplies">80</span>
+    </div>
+    <div class="stat">
+      <span class="stat-icon">◉</span>
+      <span class="stat-label">弹药</span>
+      <span class="stat-value" id="stat-ammo">15</span>
+    </div>
+    <div class="companions-display" id="companions-display"></div>
+  </div>
+
+  <!-- Content -->
+  <div class="content-area">
+    <div id="scene-area"></div>
+    <div id="portrait-strip" class="portrait-strip"></div>
+    <div class="day-header" id="day-header">第 0 天</div>
+    <div class="story-text" id="story-text" onclick="skipTypewriter()" style="cursor:pointer"></div>
+  </div>
+
+  <!-- Choices -->
+  <div class="choices-area" id="choices-area"></div>
+</div>
+
+<script>
+// ============================================================
+// GAME STATE
+// ============================================================
+let G = {
+  humanity: 50,
+  supplies: 80,
+  ammo: 15,
+  companions: [],
+  tokens: [],
+  flags: {},
+  currentNode: 'start',
+  day: 0
+};
+
+let typewriterTimer = null;
+let typewriterDone = false;
+let currentSaveTab = 'save';
+let historyLog = [];  // {day, title, text, choiceText}
+
+// ============================================================
+// STORY DATA
+// ============================================================
+const NODES = {
+
+  // ============================
+  // TITLE / START
+  // ============================
+  start: {
+    day: 0,
+    title: '序章',
+    text: `那一天来得猝不及防。
+
+凌晨三点，警报声划破寂静，随即是混乱的枪声、破碎的玻璃声，还有那种令人汗毛直竖的嘶吼。你从沉睡中惊醒，窗外的城市已经不是你认识的城市了。
+
+新闻只播放了十七分钟便彻底中断。最后一条画面是一名主播颤抖着读稿，背后的摄影棚里有人影在晃动，然后是一声短促的惨叫，画面定格，变成雪花屏。
+
+你看了看手边仅剩的半瓶水，看了看锁上的门，意识到一件事：从今天起，每一个决定，都关乎生死。
+
+选择你的据点——这将是你在废土上最初的家。`,
+    choices: [
+      { text: '郊区别墅：宽敞，物资充裕，但位置暴露', next: 'shelter_villa' },
+      { text: '地下掩体：狭窄阴暗，但易守难攻', next: 'shelter_bunker' }
+    ]
+  },
+
+  shelter_villa: {
+    day: 0,
+    title: '据点选择',
+    text: `你选择了城郊那栋三层别墅。
+
+主人已经逃走——或者说，已经不在了。冰箱里有食物，储藏室里有罐头，车库里甚至有一台发电机。你仔细检查了每一扇窗户，用家具堵住了正门。
+
+别墅的落地玻璃窗给了你良好的视野，也给了外面的一切注视你的机会。夜晚，远处的城市在燃烧，橘红色的光把天空染成末世的颜色。
+
+你告诉自己：这里很好。即便你心里清楚，"好"这个词在新世界里，不过是"还没出事"的另一种说法。`,
+    effects: { supplies: 15, ammo: 5, flags: { shelter: 'villa' } },
+    choices: [
+      { text: '稳住心神，开始规划第一天的行动', next: 'day1' }
+    ]
+  },
+
+  shelter_bunker: {
+    day: 0,
+    title: '据点选择',
+    text: `你找到了城区地下的那个防空掩体。
+
+入口隐藏在一家干洗店的储藏室后面，铁门厚达二十厘米，锈迹斑斑但依然坚固。里面有应急照明，有一批过期但仍可食用的军用口粮，还有前人留下的一箱弹药——也许他们已经不需要了。
+
+空气沉闷，带着霉味和铁锈气息。你坐在角落里，听着头顶传来的脚步声、咆哮声，以及偶尔的枪声。地下的世界与地上的地狱只有一扇铁门的距离。
+
+你检查了弹药，锁上了门，在黑暗中睁眼等待天明。`,
+    effects: { ammo: 10, flags: { shelter: 'bunker' } },
+    choices: [
+      { text: '深呼吸，等待第一缕黎明的到来', next: 'day1' }
+    ]
+  },
+
+  // ============================
+  // DAY 1
+  // ============================
+  day1: {
+    day: 1,
+    title: '第一天',
+    text: `第一天，你活下来了。
+
+阳光透过缝隙渗进来，带着某种残忍的正常感。外面的世界已经彻底不同，但太阳还是照常升起，仿佛什么都没有发生。
+
+你清点了物资，发现情况比预想的略好，也比你期望的要糟糕。水是最紧缺的，其次是食物。弹药更是要省着用。
+
+下午，你听到了奇怪的声音——不是那种令人恐惧的低吼，而是人类的声音。靠近据点的街道上，有什么东西在移动。`,
+    choices: [
+      { text: '小心靠近窗边查探，看看是谁', next: 'day1_investigate' },
+      { text: '保持隐蔽，不要暴露自己的位置', next: 'day1_hide' }
+    ]
+  },
+
+  day1_investigate: {
+    day: 1,
+    title: '第一天·探查',
+    text: `你压低身体，从窗角向外望去。
+
+街道上，一个男人正挣扎着向前爬行。他的左腿受了伤，身后留着一道血迹。他似乎正在努力靠近你据点的方向，嘴里断断续续地喊着什么，声音沙哑，几乎听不清。
+
+他的伤口不像是被咬伤——更像是子弹或者碎片划过的伤口。他还没有感染的迹象：眼睛清明，表情里有痛苦，有恐惧，还有一种只有活人才有的东西——求生的渴望。
+
+远处，黑影在晃动。他剩下的时间不多了。`,
+    choices: [
+      { text: '冒险出去把他带进来，包扎伤口', next: 'day2_blake_join', effects: { companions: { add: '布莱克' }, supplies: -10, humanity: 10 } },
+      { text: '太危险了，他会暴露你的位置，袖手旁观', next: 'day2_alone', effects: { humanity: -15 } }
+    ]
+  },
+
+  day1_hide: {
+    day: 1,
+    title: '第一天·潜伏',
+    text: `你没有动。
+
+你蜷缩在角落里，控制呼吸，听着外面的动静。声音越来越近，然后是一道女人一样的哀号——不，是男人，被痛苦扭曲了音调。
+
+"有人吗？求求你们……"
+
+你闭上眼睛。门就在那里，锁着。你是安全的。
+
+夜里，那道声音渐渐消失了，被另一种声音取代——更多脚步声，沉重而迟缓，然后是短暂的撕扯，然后是沉默。
+
+第二天清晨，你推开门缝，看到了血迹。然后你看到了那个人——他还活着，奄奄一息地靠在墙角，不知道怎么熬过了那一夜。`,
+    choices: [
+      { text: '把他带进来，这是你的责任', next: 'day2_blake_join', effects: { companions: { add: '布莱克' }, supplies: -10, humanity: 10 } },
+      { text: '他是累赘，独自离开寻找物资', next: 'day2_alone', effects: { humanity: -10 } }
+    ]
+  },
+
+  // ============================
+  // DAY 2
+  // ============================
+  day2_blake_join: {
+    day: 2,
+    title: '第二天·布莱克',
+    text: `他叫布莱克，前武装部队侦察兵，在撤退混乱中与部队失散。
+
+你用仅剩的消毒酒精处理了他的伤口，他没有叫一声。等到你包扎完毕，他坐起来，认真地看了你很久，然后说了四个字："谢谢你，伙伴。"
+
+他的眼睛很深，藏着一种历经生死的沉静。等他能站起来走路，他立刻开始帮你加固据点，检查周围地形，规划撤退路线。这些事他做起来行云流水，像是刻在肌肉记忆里的本能。
+
+当天夜里，他告诉你他听说过一个地方——一个据说有军队驻守、有电有水的安全营地，人们叫它"黎明者营地"。"只是传言，"他说，"但在末世里，传言有时候就是全部的希望。"`,
+    choices: [
+      { text: '和布莱克一起去附近探索，寻找更多线索', next: 'day4_explore' },
+      { text: '先加固据点，积蓄力量再做打算', next: 'day4_shelter_work' }
+    ]
+  },
+
+  day2_alone: {
+    day: 2,
+    title: '第二天·独行',
+    text: `你独自一人。
+
+这个事实以某种奇怪的方式在夜晚变得格外沉重。你坐在黑暗里，听着外面偶尔传来的声响，感觉每一个影子都在质问你昨天的决定。
+
+你记得他的声音。你记得他靠在墙上的样子。
+
+第二天天还没亮，你告诉自己，为了生存你必须行动，必须找到更多物资。独自一人意味着更灵活，更安静，需要更少的食物和水。
+
+你这样告诉自己，试图相信这些理由。
+
+今天必须外出了。物资不会自己送上门。`,
+    choices: [
+      { text: '前往附近的超市，那里应该还有剩余物资', next: 'day3_supermarket' },
+      { text: '去废弃医院，药品和医疗物资可能更实用', next: 'day3_hospital' }
+    ]
+  },
+
+  // ============================
+  // DAY 3
+  // ============================
+  day3_supermarket: {
+    day: 3,
+    title: '第三天·超市',
+    text: `超市已经被洗劫过一次，但仍有残余。
+
+你小心穿过倒塌的货架，把能找到的罐头、干粮、净水片塞进背包。超市里有几具遗体，你刻意不去看它们的脸。
+
+正当你准备撤离，你听到了动静——不是那种缓慢的拖曳声，而是急促的奔跑声，伴随着清脆的金属撞击声，还有一个年轻女性压低的、却充满恐惧的声音："别过来……不要过来……"
+
+货架转角处，一个年轻的姑娘被三具感染者堵在墙角。她手里握着一根金属管，勇敢地挥舞着，但那三个东西正在慢慢合围。她还没有被咬到，但时间不多了。`,
+    choices: [
+      { text: '出手相救——开枪吸引注意力，把她解救出来（消耗3发弹药）', next: 'day4_lime_join', condition: { minAmmo: 3 }, conditionText: '需要至少3发弹药', effects: { ammo: -3, humanity: 15, tokens: { name: '《救赎》', desc: '你选择拯救陌生人', score: 200 } } },
+      { text: '趁乱抢走物资，她的命运与你无关', next: 'day4_no_lime', effects: { supplies: 15, humanity: -20 } }
+    ]
+  },
+
+  day3_hospital: {
+    day: 3,
+    title: '第三天·医院',
+    text: `废弃的医院像一座巨大的空壳，走廊里回荡着你自己的脚步声。
+
+你在药房找到了消毒用品、绷带，甚至几盒抗生素，这些东西价值连城。你把能用的都塞进了包里，仔细避开那些仍在游荡的感染者。
+
+就在你准备从后门撤离时，你看到了她。
+
+一个年轻女孩，大学生模样，被两具感染者堵在护士台后方。她手边有一把椅子当武器，腿在发抖，但眼神里有某种倔强。她用中文低声咒骂着，用椅子腿挡住一只伸来的手，另一只感染者正绕到她侧面。
+
+时间只够做一个决定。`,
+    choices: [
+      { text: '开枪解救她，消耗弹药但救了一条命（消耗3发弹药）', next: 'day4_lime_join', condition: { minAmmo: 3 }, conditionText: '需要至少3发弹药', effects: { ammo: -3, humanity: 15, tokens: { name: '《救赎》', desc: '你选择拯救陌生人', score: 200 } } },
+      { text: '拿好医疗物资，悄悄离开——你有自己的命要保', next: 'day4_no_lime', effects: { supplies: 10, humanity: -20 } }
+    ]
+  },
+
+  // ============================
+  // DAY 4
+  // ============================
+  day4_lime_join: {
+    day: 4,
+    title: '第四天·莱姆',
+    text: `她叫莱姆，二十一岁，城市规划专业大三学生。
+
+灾变发生时她一个人在学校图书馆熬夜赶论文，就这样被困在了末世里。她没有哭，至少你没看见她哭过，但她有时会盯着某个地方发呆很久，你猜她在想家人。
+
+莱姆比外表看起来更有用。她记忆力惊人，周边地图几乎全装在脑子里，知道哪些楼有地下停车场，哪些街区感染者少。更重要的是，她很冷静——那种经过极度恐惧之后沉淀下来的冷静。
+
+"谢谢你救我，"她第一天晚上这样说，"我不会成为你的负担的。"
+
+她没有食言。`,
+    choices: [
+      { text: '带莱姆探索周边区域，收集更多情报', next: 'day7_explore' },
+      { text: '回到据点休整，规划下一步', next: 'day7_shelter' }
+    ]
+  },
+
+  day4_no_lime: {
+    day: 4,
+    title: '第四天·独行',
+    text: `你跑出了大楼。
+
+背包里多了一些物资，但心里多了别的东西。你跑出街道时，隐约听到身后传来一声清脆的碎裂声——椅子，或者骨骼，你不想知道是哪个。
+
+然后，是沉默。
+
+你没有停下来。你告诉自己，生存是有代价的。你告诉自己，一个陌生人的命换不来你的保命资本。这些话都是真的，你一遍遍在脑子里重复，直到它们开始像是你真的相信的东西。
+
+但那个声音，你记了很久。`,
+    choices: [
+      { text: '继续往前走，这个世界不等人', next: 'day7_explore' }
+    ]
+  },
+
+  day4_explore: {
+    day: 4,
+    title: '第四天·与布莱克出发',
+    text: `布莱克走在前面，步伐轻盈得令人意外——一个受过伤的大男人，在废土上移动时几乎没有声音。
+
+你们清理了附近两个街区，发现了一个小型杂货铺的地下室，里面有被遗忘的库存——罐头、矿泉水，还有一盒蜡烛。布莱克把门重新加固，在门口设了一个简单的预警装置。
+
+"这些技能是军队教的？"你问。
+
+"有些是，"他说，"有些是上一个星期学的。"
+
+这话让你沉默了一会儿。末世改变了每个人，而那些改变发生的速度，快得残忍。`,
+    effects: { supplies: 10 },
+    choices: [
+      { text: '继续向城区深处探索', next: 'day7_explore' }
+    ]
+  },
+
+  day4_shelter_work: {
+    day: 4,
+    title: '第四天·加固据点',
+    text: `你们花了整整一天加固据点。
+
+布莱克把每一扇窗用木板和家具堵上，留下了三个观察口，位置经过仔细计算，能保证最大的视野覆盖。你负责检查食物和水的库存，制作一份详细的物资清单。
+
+"军队里有句话，"布莱克一边锤钉子一边说，"阵地不是你挖好的那一刻最强，而是你住进去那一刻最强。"
+
+到了傍晚，据点已经从一个随意的藏身处变成了某种真正意义上的堡垒。你们坐下来，看着彼此用汗水换来的成果，第一次感觉到了某种叫"安全"的东西的雏形。
+
+它很脆弱。但它存在。`,
+    effects: { flags: { fortified: true } },
+    choices: [
+      { text: '出发，是时候扩大活动范围了', next: 'day7_explore' }
+    ]
+  },
+
+  // ============================
+  // DAY 7
+  // ============================
+  day7_explore: {
+    day: 7,
+    title: '第七天·城市深处',
+    text: `第七天，你们进入了城区更深处。
+
+城市在死亡，但死亡有自己的逻辑和节奏。感染者在白天变得迟钝，但数量越来越多；人类的痕迹越来越少，只有偶尔的枪声提醒你，这片废土上还有其他活人。
+
+在一栋废弃的广播大楼里，你们发现了一台还在运转的应急无线电。它每隔十分钟播放一段循环录音，声音是女性的，镇定而清晰：
+
+"……黎明者营地，坐标位于城北三十公里，前万隆工业园区。有食物，有医疗，有安全。我们在等待所有善意的幸存者。请携带此录音作为通行凭证……"
+
+信号时强时弱，但每个字都听得清楚。`,
+    choices: [
+      { text: '跟随无线电信号，向城北方向搜索信号源', next: 'day10_signal' },
+      { text: '信号可能是陷阱，继续在本区域搜索物资', next: 'day10_loot' }
+    ]
+  },
+
+  day7_shelter: {
+    day: 7,
+    title: '第七天·深夜敲门',
+    text: `入夜，你们选择留在据点休整。
+
+该睡觉了，但睡意难以降临。远处的城市仍然偶尔传来声音，像是一座正在缓慢沉没的船发出的呻吟。
+
+凌晨两点，有人敲门。
+
+不是拍打，不是撞击，而是有节奏的、克制的敲门声——那是人的敲法。三短一长，停顿，再三短一长。
+
+"里面有人吗？"女人的声音，带着广州口音，刻意压低，"我是护士，我没有被感染，我需要帮助，求你们了……"`,
+    choices: [
+      { text: '开门，把她让进来', next: 'day7_luna' },
+      { text: '不开门，这个世界里信任太危险', next: 'day10_loot', effects: { humanity: -10 } }
+    ]
+  },
+
+  day7_luna: {
+    day: 7,
+    title: '第七天·露娜',
+    text: `门开了一条缝，然后你把她让进来。
+
+她叫露娜，三十二岁，急诊科护士。她独自在废土上走了五天，靠着专业知识和运气活到了现在。她的急救包里有东西是你们没有的，她处理伤口的技术让布莱克都不由自主地点头称赞。
+
+"这个世界不能独自存活，"她在换药时说，语气平静，像是在说一个经过反复验证的结论，"我见过太多人因为一个人硬撑而死。伤口感染，失温，精神崩溃。人需要彼此。"
+
+她加入了你们。这个夜晚，据点里多了一盏灯的温度。`,
+    effects: { companions: { add: '露娜' }, humanity: 10 },
+    choices: [
+      { text: '跟随无线电信号，向城北进发', next: 'day10_signal' }
+    ]
+  },
+
+  // ============================
+  // DAY 10
+  // ============================
+  day10_signal: {
+    day: 10,
+    title: '第十天·信号追踪',
+    text: `你们花了三天追踪那个信号，最终到达了一所废弃的中学。
+
+操场上的杂草已经长得很高，教学楼的墙上有弹孔——这里发生过战斗。但校门口，有人挂着手写的指示牌：
+
+"黎明者营地方向→ 城北30公里，万隆工业园。带上此牌可入。"
+
+在校长室里，你们找到了一批医疗物资，还有一台手抄的地图，标注着安全路线和感染者聚集区域。有人在这里住过，然后离开了。朝着更好的地方，或者更坏的地方。
+
+"黎明者营地是真实的，"你的同伴看着那块指示牌说，"我们要去吗？"`,
+    choices: [
+      { text: '立即动身前往黎明者营地，距离我们不远了', next: 'day15_dawn_approach' },
+      { text: '太冒险了，先在这片区域巩固生存基础', next: 'day15_crisis' }
+    ]
+  },
+
+  day10_loot: {
+    day: 10,
+    title: '第十天·搜刮行动',
+    text: `你们选择继续在熟悉的区域活动。
+
+第九天，一批感染者群体迁徙，冲进了你们搜索的街区。那是大约三四十具的规模——不算最大的群体，但已经足以致命。
+
+你们躲进了一栋四层楼的旧仓库，看着下面密密麻麻的身影缓慢移动。布莱克的表情没有变化，但他的手指头一直在轻敲大腿，那是他不安时的习惯。
+
+等了两个小时，群体开始分散。
+
+选择摆在你们面前：趁着还有感染者在附近，吸引火力，打开通路，还是就此撤退，今天安全，但空手而归。`,
+    choices: [
+      { text: '开枪清路，用弹药换物资（消耗5发弹药）', next: 'day15_crisis', condition: { minAmmo: 5 }, conditionText: '需要至少5发弹药', effects: { ammo: -5, supplies: 20 } },
+      { text: '放弃物资，撤退优先，命比东西重要', next: 'day15_crisis', effects: { supplies: -10 } }
+    ]
+  },
+
+  // ============================
+  // DAY 15
+  // ============================
+  day15_dawn_approach: {
+    day: 15,
+    title: '第十五天·黎明者营地',
+    text: `你们在黄昏前看到了营地。
+
+万隆工业园区的围墙被加固过，外围有用废车辆堆成的路障，几个望台上有持枪的守卫。营地里有灯光——真正的电灯，不是蜡烛。那种橘黄色的光在暮色中显得像一个奇迹。
+
+距离营地还有两百米，三名持枪守卫从废车后面出现，拦住了你们的去路。
+
+"停下！手放高！"领头的是个高壮的女人，表情警惕但专业，"营地规矩：报上身份，说明来意，丢弃武器才能进入。"
+
+她的眼睛在打量你们每一个人。那目光里有疲倦，有怀疑，也有某种藏在深处的、不愿意熄灭的温度。`,
+    choices: [
+      { text: '举手示意友善，主动报上身份和人数', next: 'day15_dawn_enter' },
+      { text: '不信任正面入营，当夜绕到围墙薄弱处偷偷潜入', next: 'day15_dawn_sneak' }
+    ]
+  },
+
+  day15_dawn_enter: {
+    day: 15,
+    title: '第十五天·入营',
+    text: `营地里的世界是另一种现实。
+
+有一百多个人，有组织，有分工，有一套基本运转的系统。领导者叫马库斯，五十多岁，前工厂管理者，说话简洁，判断快速。他花了五分钟评估你们，然后说："愿意干活儿的，留下来。"
+
+营地的医疗员叫伊芙琳，三十岁出头，前外科医生。她给你们做了健康检查，眼神专注，手法利落。当她确认所有人没有感染时，她吐出一口气，露出了这个世界里少见的真实笑容。
+
+"欢迎来到黎明者营地，"她说，"我们不承诺永远安全，但我们承诺彼此。"`,
+    effects: { companions: { add: '伊芙琳' }, supplies: 15 },
+    choices: [
+      { text: '留下来，这里有你们需要的一切', next: 'day20_camp_life' },
+      { text: '交换物资后离开，营地太显眼，不适合久留', next: 'day20_trade_leave', effects: { supplies: 10, ammo: 5 } }
+    ]
+  },
+
+  day15_dawn_sneak: {
+    day: 15,
+    title: '第十五天·潜入',
+    text: `夜里，你们找到了围墙一处松动的地方。
+
+正当你们刚钻进去，手电光刷过来了。"不许动！"三把枪同时指向你们。营地的夜间巡逻比你预想的专业很多。
+
+就在情况险些失控的时候，一个女人从黑暗中走出来，拦在你们和守卫之间。
+
+"马图斯，放松，"她对守卫说，"我认识他们——不，我不认识，但我知道他们是什么人。眼睛看人，不是看枪。他们是求生的，不是来害人的。"
+
+伊芙琳。你们第一次见面就是这样，她把你们从一触即发的枪口下拉了回来。`,
+    choices: [
+      { text: '接受伊芙琳的帮助，留在营地', next: 'day20_camp_life', effects: { companions: { add: '伊芙琳' }, humanity: 5 } },
+      { text: '太丢脸了，宁可离开也不接受施舍', next: 'day20_trade_leave' }
+    ]
+  },
+
+  day15_crisis: {
+    day: 15,
+    title: '第十五天·据点危机',
+    text: `第十五天的夜里，它们来了。
+
+不是一两具，而是一群。某种原因——可能是昨天枪声，可能是血腥气——吸引了一批感染者朝你们据点聚拢。你们在睡眠中惊醒，听到了拍打声从四面传来，越来越密集，越来越重。
+
+"窗子！"你的同伴低吼。
+
+你们有三个选择，时间很短。`,
+    choices: [
+      { text: '【据点已加固】启动防御工事——栅栏和预警装置发挥作用', next: 'day20_recovery', condition: { hasFlag: 'fortified' }, conditionText: '需要：据点已加固', effects: { supplies: -5 } },
+      { text: '全力反击，用弹药守住阵地（消耗8发弹药）', next: 'day20_recovery', condition: { minAmmo: 8 }, conditionText: '需要至少8发弹药', effects: { ammo: -8, supplies: -10 } },
+      { text: '【布莱克在队】让布莱克断后，你们先撤', next: 'day20_blake_sacrifice', condition: { hasCompanion: '布莱克' }, conditionText: '需要：布莱克在队', effects: { companions: { remove: '布莱克' }, tokens: { name: '《牺牲》', desc: '布莱克用生命守护了你们', score: 350 }, humanity: 20 } },
+      { text: '放弃据点，趁夜色撤离——活着比什么都重要', next: 'day20_recovery', effects: { supplies: -15, humanity: -5 } }
+    ]
+  },
+
+  // ============================
+  // DAY 20
+  // ============================
+  day20_camp_life: {
+    day: 20,
+    title: '第二十天·营地生活',
+    text: `营地的生活有自己的节奏。
+
+清晨出发搜索，下午加工物资，傍晚聚在一起汇报情况，夜里轮班守卫。伊芙琳开设了简单的急救课程，每天下午，十几个人围坐在仓库角落，认真学着包扎和消毒。你也去听，不是没有原因的——在这个世界里，知道怎么保住自己和同伴的命，比任何武器都重要。
+
+第二十天，一个新的侦察员骑着摩托车回营，带来了消息。他叫克里斯，二十六岁，前快递员，现在是营地最优秀的轻型侦察员。
+
+"北边两百公里，有一个废弃军事基地，"他在地图上指给马库斯看，"防御设施完整，武器库——我没敢进去确认，但从外面看，规模不小。"
+
+马库斯沉默了很久，然后看向你们。`,
+    choices: [
+      { text: '加入克里斯的侦察队，和他一起去确认基地情况', next: 'day25_expedition', effects: { companions: { add: '克里斯' } } },
+      { text: '留在营地，你的工作在这里', next: 'day25_camp_stay' }
+    ]
+  },
+
+  day20_trade_leave: {
+    day: 20,
+    title: '第二十天·独立',
+    text: `你们离开了营地，带着刚交换来的物资。
+
+营地很好，但你没有安全感——太多人，太多变数，太多你不认识的脸。你宁愿在自己熟悉的规则里生存。
+
+第二十天，你们在城区西侧找到了一个新的落脚点：一间地下仓库，干燥，隐蔽，足够几个人住。
+
+但就在整理物资时，你看到窗外的天空——那片烟雾的方向，和黎明者营地的位置重合。
+
+不知道那里发生了什么。也许什么都没有。也许是你多想。
+
+你低下头，继续整理物资。`,
+    choices: [
+      { text: '继续自己的道路', next: 'day25_wandering' }
+    ]
+  },
+
+  day20_recovery: {
+    day: 20,
+    title: '第二十天·重建',
+    text: `你们撑过来了，但代价不小。
+
+据点损毁严重，一些物资被损坏，几个人带着轻伤，心理上的疲惫比身体更深。那一夜的混乱像是在所有人心上留下了一道印记——世界变坏的速度比你们的准备更快，一直都是。
+
+"我们需要做决定，"布莱克（如果还在）对你说，或者是莱姆，或者是露娜，"留在这里等下一次，还是寻找更稳定的地方。"
+
+这个问题没有标准答案，只有你愿意承担的那个答案。
+
+接下来的几天，你们用沉默和劳动填满时间，重新清点物资，重新制定计划，重新告诉自己，活下去的理由。`,
+    choices: [
+      { text: '动身，去更广阔的地方碰碰运气', next: 'day25_wandering' }
+    ]
+  },
+
+  day20_blake_sacrifice: {
+    day: 20,
+    title: '第二十天·布莱克的抉择',
+    text: `你永远记得他推开你的那一刻。
+
+"跑，"他说，就两个字，语气平静得像是在说一件再普通不过的事，"我来断后。"
+
+你想说不，但他已经转过身，用肩膀挡住了身后的走廊，手里是那把你们一起找来的枪。枪声在你们撤退时响起，一声，两声，三声。
+
+然后是沉默。
+
+布莱克，前武装部队侦察兵，在末世第十五天的夜晚，用自己的生命为队伍打开了一条生路。他用他的方式，完成了他认为自己应该做的事。
+
+那之后，你们走路时都变得更轻，不是因为背包变轻了，而是因为心里装着一个名字，你不敢让步子太重，怕他在哪里听见。`,
+    choices: [
+      { text: '带着他的精神，继续前进', next: 'day25_wandering' }
+    ]
+  },
+
+  // ============================
+  // DAY 25
+  // ============================
+  day25_expedition: {
+    day: 25,
+    title: '第二十五天·军事基地',
+    text: `军事基地比克里斯描述的还要大。
+
+你们花了两天时间确认安全路线，才小心翼翼地进入了大门。基地的主体建筑保存完好，感染者数量出乎意料地少——这里的钢筋混凝土结构不适合它们居住。
+
+武器库在第三号仓库。门是锁着的，但克里斯有办法——他上过技术学校，撬锁对他来说是"另一门专业"。
+
+仓库里的东西超出了所有人的预期。步枪、弹药、手雷，还有一批医用物资被整整齐齐地打包存放在角落。
+
+克里斯低声吐出一句话："够一个营地用半年的。"
+
+现在，这些都在你们面前。怎么处置？`,
+    choices: [
+      { text: '带回营地，分享给所有人——这些物资应该属于更多人', next: 'day30_hero', effects: { ammo: 20, humanity: 15, tokens: { name: '《慷慨》', desc: '你将战略物资分享给营地', score: 250 } } },
+      { text: '自己留着——在这个世界，力量就是生存', next: 'day30_selfish', effects: { ammo: 30, humanity: -20 } }
+    ]
+  },
+
+  day25_camp_stay: {
+    day: 25,
+    title: '第二十五天·营地防卫',
+    text: `克里斯离开的第三天，营地出现了意外。
+
+一支约二十人的武装团伙出现在了营地外围，他们骑着摩托，携带武器，领头的是个留络腮胡的男人，他们自称"旅行者"，但眼神和姿态出卖了他们的真实目的。
+
+"我们只要食物，"络腮胡说，"给我们一半库存，我们走人。不然……"他没把话说完，但枪托在栅栏上敲击的声音说完了剩下的部分。
+
+马库斯把问题抛给了你，因为你在营地的这些天里建立了自己的信任。
+
+"你来谈，"他说，"你的判断我信。"`,
+    choices: [
+      { text: '独自走出去谈判，寻找和平解决的可能', next: 'day30_peace', effects: { humanity: 20, tokens: { name: '《和平》', desc: '你选择谈判而非暴力', score: 300 } } },
+      { text: '打开武器库，组织营地战斗力，武力驱逐入侵者', next: 'day30_fight', effects: { ammo: -10, supplies: 25 } }
+    ]
+  },
+
+  day25_wandering: {
+    day: 25,
+    title: '第二十五天·游荡',
+    text: `你们在城市的废墟中漫游，用直觉和经验在末世里划出一条路。
+
+第二十三天，你们发现了一件奇怪的事：在一片看似杂乱的废墟下，有规律的通风孔，有延伸向地下的混凝土台阶，有人工设施的痕迹。
+
+一个秘密掩体。
+
+比你们任何人见过的都要精密——不是民用防空洞，也不是普通地下室。门上有符号，像是机构标志，但已经被人刻意磨损。里面有电源，有服务器机柜——大部分已经关机，但有一台还在运转，屏幕亮着。
+
+屏幕上显示的是数据，科学数据，关于一种叫"LY-7"的病毒的研究记录。`,
+    choices: [
+      { text: '深入研究，这些记录关系到一切的真相', next: 'day30_bunker' },
+      { text: '不要碰这些东西，有些真相不如不知道', next: 'day30_road' }
+    ]
+  },
+
+  // ============================
+  // DAY 30
+  // ============================
+  day30_hero: {
+    day: 30,
+    title: '第三十天·英雄',
+    text: `武器运回了营地，在所有人的见证下开箱。
+
+那一刻营地里有人哭了。不是因为武器，而是因为看到了某种东西的可能——守住这里的可能，活下去的可能，让这片地方真正变成家园的可能。
+
+马库斯握了你的手很久，没有说话。你们都知道那个握手意味着什么。
+
+克里斯在营地里开始训练新人，伊芙琳扩建了医疗区，就连食堂都多了三道菜。营地里有一种微妙的变化，不是物资的增加，而是人心的某种松动——一种叫"希望"的东西开始在人群里流通。
+
+马库斯在第三十天把你叫到了办公室。"有个任务，"他说，"需要最值得信任的人去做。"`,
+    choices: [
+      { text: '听取任务详情，准备好了', next: 'day30_checkpoint' }
+    ]
+  },
+
+  day30_selfish: {
+    day: 30,
+    title: '第三十天·代价',
+    text: `克里斯沉默地跟着你们回来。
+
+他没有立刻说什么，但你看见他看向那些武器的眼神——里面有某种你不想承认自己看懂了的东西。营地里的人也感觉到了什么，那种微妙的冷淡，那种绕开你说话时的刻意。
+
+第二十八天，克里斯终于开口了。
+
+"我们本来可以帮那一百多个人的，"他说，语气里没有愤怒，只有疲惫，"而你选择了我们自己。我不是说你错了。只是……"他顿了顿，"我需要知道你是什么样的人，才能决定要不要继续跟着你。"`,
+    choices: [
+      { text: '拿出一部分弹药送回营地，承认这个决定需要平衡', next: 'day30_checkpoint', effects: { ammo: -10, humanity: 10 } },
+      { text: '这是你的决定，你不需要为此道歉', next: 'day30_checkpoint', effects: { companions: { remove: '克里斯' }, humanity: -10 } }
+    ]
+  },
+
+  day30_peace: {
+    day: 30,
+    title: '第三十天·和平',
+    text: `你走出去，只带了一瓶水和一个空手势。
+
+络腮胡笑了，笑里有轻蔑。但你开始说话，说那二十个人每天需要多少食物，说营地可以提供什么，说双方能给对方带来什么——劳动力，侦察范围，安全感。
+
+你不是在谈判，你是在重新定义他们的选择。
+
+一个小时后，络腮胡吐掉口里的草茎，说："你这人……有意思。行，我们谈。"
+
+三天后，那二十个人搬进了营地的外围区域，成了第一批"外围守卫"。其中有木工，有猎人，有一个前警察。
+
+马库斯说，这是营地建立以来最聪明的一笔。`,
+    choices: [
+      { text: '营地继续壮大，准备迎接更大的挑战', next: 'day30_checkpoint' }
+    ]
+  },
+
+  day30_fight: {
+    day: 30,
+    title: '第三十天·胜利',
+    text: `战斗持续了二十分钟。
+
+你们人数少，但防御优势明显，而且你们有一件对方没有的东西：这里是我们的家，我们不能输。
+
+络腮胡的团伙在第一轮还击后犹豫了，在第二轮还击后开始后退，在第三轮之后骑上摩托离开了。走之前，络腮胡用一种复杂的眼神看了营地一眼——不完全是愤怒，还有某种更接近敬畏的东西。
+
+营地有三个人受伤，两人轻伤，一人需要伊芙琳做简单手术。但所有人都活着。
+
+伤亡让胜利变得沉重，但沉重本身也是一种真实。营地里的人都安静了一晚上，各自想着各自的事。`,
+    choices: [
+      { text: '清点伤亡，为明天做准备', next: 'day30_checkpoint' }
+    ]
+  },
+
+  day30_bunker: {
+    day: 30,
+    title: '第三十天·真相',
+    text: `LY-7病毒，最早记录于两年前，源于某大型生物制药公司的实验室。
+
+研究记录用的是专业术语，但你能看懂关键的部分：这不是自然变异，这是人为的。最初的研究目标是某种医学应用，但数据显示，某个环节出了问题——或者更确切地说，某人做了一个他们不该做的决定。
+
+最后一条记录的时间戳显示在灾变前七十二小时，写记录的人叫"陈博士"，她的最后一句话是：
+
+"如果有人看到这份记录，请把它带给世界上还存在的任何政府机构。这不是终点。LY-7有弱点，我找到了。数据在附件里。疫苗是可能的。"
+
+你把那些数据拷贝下来，装进防水袋，放进最贴身的口袋里。`,
+    effects: { tokens: { name: '《真相》', desc: '你发现了病毒起源的秘密', score: 400 }, flags: { has_research: true } },
+    choices: [
+      { text: '带着这份真相继续前行', next: 'day30_checkpoint' }
+    ]
+  },
+
+  day30_road: {
+    day: 30,
+    title: '第三十天·旅途',
+    text: `你关掉了那个掩体的门。
+
+有些东西关掉比较好。你在末世里活了三十天，见过太多因为知道得太多而死去的人——不是被感染者杀死，而是被自己知道的事情压垮的。
+
+第二十八天，你们遇到了一支向北迁移的车队。十几辆车，五十多个人，老人、孩子、各种背景的幸存者，用某种奇妙的粘合力凑在一起，朝着他们相信会更好的地方走。
+
+车队的领队是个中年女人，戴着一顶工地安全帽，说话直接。"人多力量大，但废物不收，"她看着你说，"你们看起来不是废物。跟上来吧。"
+
+这就是末世里的邀请方式。你们跟上去了。`,
+    effects: { supplies: 10 },
+    choices: [
+      { text: '随车队继续北上', next: 'day30_checkpoint' }
+    ]
+  },
+
+  // ============================
+  // DAY 30 CHECKPOINT
+  // ============================
+  day30_checkpoint: {
+    day: 30,
+    title: '第三十天·里程碑',
+    text: `三十天。
+
+你在末世里存活了整整三十天，做了无数个你无法预料后果的决定，认识了一些人，失去了一些人，发现了一些事，放弃了另一些。
+
+这片世界仍然危险。也许永远不会完全安全。你已经不再是灾变第一夜那个惊慌失措的人——你变得更坚韧，也更复杂，就像这个世界本身。
+
+城市废墟的远处，某个方向，有烟雾升起。不是火灾，太规律了，像是烟囱或者信号。总有人在某个地方，做着和你一样的事情：试图活下去，试图找到意义。
+
+侦察员带回了不祥的消息：一支规模空前的感染者群落正在向整片区域缓慢移动，估计抵达时间在三十到四十天之内。
+
+第二章的轮廓，开始在地平线上浮现。`,
+    choices: [
+      { text: '深呼吸，继续走下去', next: 'day35_horde_warning' }
+    ]
+  },
+
+  day30_end: {
+    day: 30,
+    title: '第二章 · 暗流',
+    text: `三十天的生存只是序章。\n\n你抬起头，看着远方的天际线。那里有烟尘升起，像是大地深处正在酝酿某种无法逆转的变化。你的直觉告诉你，接下来的日子会比之前更加艰难——也更加重要。\n\n无论此刻身边有谁，无论手中还剩下什么，你只知道一件事：停下来就是死。\n\n第二章，开始了。`,
+    choices: [
+      { text: '踏入未知的第二章', next: 'day35_horde_warning' }
+    ]
+  },
+
+  // ============================
+  // CHAPTER 2: DAY 35-80
+  // ============================
+
+  day35_horde_warning: {
+    day: 35,
+    title: '第三十五天·预兆',
+    text: `侦察员回来时，脸色白得像纸。\n\n他们带回的不是普通的坏消息。向南三十公里处，地平线上出现了一道黑线——不是乌云，不是烟雾，而是无数具感染者躯体汇聚成的潮流，正以缓慢却不可阻挡的速度向这里涌来。地面有时会轻微颤抖，仿佛大地本身在为那庞大的质量让路。天上的鸟已经消失了整整三天，连老鼠都从地缝里跑出来四散逃窜。\n\n估算数字让所有人沉默：数千，也许数万。这不是你过去遇到过的零散游荡者，而是一场真正意义上的兽潮。没有人知道它为什么移动，为什么朝着这个方向，但所有人都清楚一件事——如果不做决定，死亡会替你做。\n\n三十五天。你站在这个可能是最后一次平静的傍晚里，看着同伴们眼中交织的恐惧与信任，感受着手心里那把枪沉甸甸的重量。大约还有三十到四十天。在那之前，你必须选择你的路。`,
+    choices: [
+      { text: '组织所有人加固防御，准备正面迎敌', next: 'day40_fortify' },
+      { text: '放弃当前据点，向北方转移寻找安全地带', next: 'day40_evacuate' },
+      { text: '派侦察队深入了解兽潮规模，再做决定', next: 'day40_scout', condition: { hasCompanion: '克里斯' }, conditionText: '需要：克里斯在队' }
+    ]
+  },
+
+  day40_fortify: {
+    day: 40,
+    title: '第四十天·备战',
+    text: `接下来的五天，营地变成了一座战时工厂。\n\n每一块木板都被钉上了铁刺，每一条通道都设下了触发式陷阱，窗户用沙袋和废旧车门封死，高处安排了瞭望哨，储藏室被彻底清点——粮食、弹药、药品，每一颗子弹都记了账。疲惫和紧张如同空气中的尘埃，无处不在，却也有另一种东西在蔓延：一种被逼出来的凝聚。人们开始为彼此做事，不再只想着自己。\n\n就在第四十天的午后，北边的天空突然出现了降落伞——不是一两个，而是十几个，带着军绿色的集装箱在距离营地大约两公里的开阔地缓缓降落。军用空投。这种事在灾变初期听说过，但从没亲眼见过。那些箱子里会有什么？武器？药品？口粮？\n\n你的心跳加速了。这可能是天降的机遇，也可能是个陷阱——空投的消息不会只有你们知道。`,
+    effects: { supplies: -15 },
+    choices: [
+      { text: '带人去抢夺空投物资，军用补给不容错过', next: 'day40_airdrop' },
+      { text: '继续加固，空投可能是陷阱或已被其他势力占据', next: 'day45_siege_prep' }
+    ]
+  },
+
+  day40_evacuate: {
+    day: 40,
+    title: '第四十天·北迁',
+    text: `离开，永远比想象中更难。\n\n三十天积攒下来的一切——备用的床垫、手绘的地图、墙上那张记录每个人名字的纸——大部分都只能留下。能带走的只有活命的东西：食物、弹药、工具，还有人。车队在黎明前出发，没有人回头看最后一眼，但所有人心里都清楚，那个地方再也回不去了。\n\n北上的公路上，他们不是唯一的难民。来自不同方向的幸存者群体像涓涓细流汇入同一条河，有的结伴同行，有的相互警惕。路上的危险比地图上标注的多得多——废弃的路障后面躲着感染者，桥梁已经部分坍塌，有几次险些陷入包围。\n\n然而在第四十天傍晚，前方出现了一个意外的收获：一座被遗弃的大型工厂建筑群，砖墙厚实，铁门完好，内部甚至还有柴油发电机和基础水处理设施。这里可以成为新的据点。就在所有人松一口气的时候，西边的天空出现了降落伞的轮廓，军用空投集装箱在两三公里外缓缓着陆。`,
+    effects: { supplies: -10 },
+    choices: [
+      { text: '绕路去回收空投物资', next: 'day40_airdrop' },
+      { text: '不冒险，继续北上到工厂安顿', next: 'day45_factory' }
+    ]
+  },
+
+  day40_scout: {
+    day: 40,
+    title: '第四十天·侦察',
+    text: `克里斯说，要知道敌人有多可怕，就必须亲眼看见。\n\n他带队深入，你随行。两天的潜行把你们带到了兽潮的外围——然后你们停下来了，因为再往前走就是死。那不是一群感染者，那是一片人海，从山丘蔓延到谷底，从树林延伸到公路，黑压压的躯体像被某种看不见的力量驱动着，朝同一个方向移动，发出低沉的、连绵不断的嘶鸣，像是一首由腐烂和绝望谱成的交响乐。\n\n但克里斯注意到了某件更令人不安的事：兽潮并不是随机漫游的。在人群的深处，有一个更高、更快、移动时其他感染者会本能避让的身影。那个东西在领路。它不是普通的感染者，克里斯说，他见过这种迹象，但从未见过这么大的规模。\n\n撤回途中，西边天际出现了降落伞，军用空投的集装箱在视野边缘沉沉坠落。`,
+    effects: { ammo: -3 },
+    choices: [
+      { text: '去截取空投，情报和物资同样重要', next: 'day40_airdrop' },
+      { text: '追踪兽潮的行进规律，也许能找到它们的弱点', next: 'day45_horde_secret', effects: { humanity: 5 } }
+    ]
+  },
+
+  day40_airdrop: {
+    day: 40,
+    title: '第四十天·空投',
+    text: `你们不是唯一赶来的人。\n\n空投点是一片废弃的停车场，三个巨大的军用集装箱砸出了深坑，降落伞的织物像死亡的花朵铺陈在水泥地上。你们从东边来，另一支七八人的武装队伍从西边来，双方几乎同时到达，枪口在瞬间完成了相互瞄准。\n\n集装箱里的东西值得为它冒险：突击步枪和弹药、密封的药品箱、两周份的军用口粮，以及——压在最底层的一个防水公文包，上面印着深红色的"机密"字样。没有人知道那里面是什么。\n\n紧张对峙在停车场的废墟中凝固成了某种脆弱的平衡。对面的领头者是个女人，短发，眼神冷静，手里的枪没有颤抖。她在等你先开口，或者先开枪。时间不多——枪声会招来感染者，而兽潮的前哨可能已经不远了。`,
+    choices: [
+      { text: '武力夺取全部空投物资（消耗5发弹药）', next: 'day45_airdrop_fight', condition: { minAmmo: 5 }, conditionText: '需要至少5发弹药', effects: { ammo: -5, supplies: 30, humanity: -15 } },
+      { text: '与对方谈判，平分物资', next: 'day45_airdrop_share', effects: { supplies: 15, ammo: 8, humanity: 10 } },
+      { text: '只拿机密文件，把物资让给对方', next: 'day45_airdrop_intel', effects: { humanity: 15, flags: { has_classified: true }, tokens: { name: '《情报》', desc: '你选择了知识而非力量', score: 200 } } }
+    ]
+  },
+
+  day45_siege_prep: {
+    day: 45,
+    title: '第四十五天·围城前夕',
+    text: `防线已经准备好了，但准备好的东西总是太少。\n\n弹药存量比预期少了三分之一，因为前几天的演练消耗了一批。有两个人在修建防御工事时受了伤，还没完全恢复。夜晚的哨岗越来越安静，不是因为安全，而是因为疲惫——连说话的力气都被这几十天的煎熬榨干了。\n\n就在你试图振作士气的时候，注意到了某些异常。如果伊芙琳还在队里，她已经连续三个夜晚不睡觉，窝在角落里反复翻看一个破旧的笔记本，在纸片上写满了你看不懂的符号。她会在你靠近时迅速合上本子，用一个疲惫的微笑掩饰什么。如果她不在，则是另一件怪事：就在今天傍晚，一个独行的陌生人出现在了营地外围，举手表示没有敌意，自称是逃出来的科学家，手里抱着一个密封的金属手提箱。\n\n无论哪件事，都指向某个你还不知道的秘密。`,
+    choices: [
+      { text: '询问伊芙琳最近的异常行为', next: 'day45_evelyn_secret', condition: { hasCompanion: '伊芙琳' }, conditionText: '需要：伊芙琳在队' },
+      { text: '接待自称科学家的陌生人', next: 'day45_scientist' },
+      { text: '专注备战，其他事以后再说', next: 'day50_horde_arrives' }
+    ]
+  },
+
+  day45_factory: {
+    day: 45,
+    title: '第四十五天·工厂',
+    text: `工厂比任何人预期的都要好。\n\n厚达半米的混凝土墙，完整的铸铁大门，地下室里两台半满柴油的发电机，以及一套简陋但仍能运作的水处理装置——这里曾经是生产什么的，已经不重要了，重要的是它现在能够保护人。大家用了整整两天时间清理感染者尸体、封堵破损的窗户、在屋顶架设瞭望台。第一次，有人笑了。不是苦笑，是真正的笑。\n\n然后有人在地下室深处发现了那些笔记。\n\n一摞手写的研究日志，用防水袋封存，页面已经微微泛黄。内容是关于某种病毒的——你认不出那些专业术语，但"LY-7"这个字眼反复出现，和另一个你见过的名字并列。有人曾在这里工作过，或者在逃亡途中把最重要的东西藏在了这里。如果伊芙琳在场，她拿起第一页纸，手开始微微颤抖，轻声说了一句："这是陈博士的笔迹。"`,
+    choices: [
+      { text: '让伊芙琳研究这些笔记', next: 'day45_evelyn_secret', condition: { hasCompanion: '伊芙琳' }, conditionText: '需要：伊芙琳在队' },
+      { text: '销毁笔记，不想引来麻烦', next: 'day50_horde_arrives', effects: { humanity: -5 } },
+      { text: '自己研究笔记内容', next: 'day45_scientist' }
+    ]
+  },
+
+  day45_horde_secret: {
+    day: 45,
+    title: '第四十五天·兽潮之谜',
+    text: `你们跟了三天，终于确认了那个恐怖的事实。\n\n兽潮不是无序的。在那片移动的黑色海洋深处，有一个核心——更高，更快，移动时周围的感染者会本能地让路，形成一种诡异的秩序。克里斯用望远镜盯着它看了很久，最后把望远镜递给你，声音低沉："你有没有觉得，它好像知道我们在看它？"\n\n那个"Alpha"感染者和普通感染者有着本质的不同。它没有盲目地扑向任何气味，而是在行进中不断改变路线，仿佛在进行某种路径规划。它甚至停下来等候落后的感染者跟上，这种行为不属于任何已知的感染模型。如果它真的在某种程度上控制着其他感染者，那么对抗兽潮的策略就需要彻底重写。\n\n这个发现既是希望，也是恐惧：杀死Alpha，兽潮或许就会瓦解；但接近Alpha，意味着你要走进那片人海的最深处。`,
+    effects: { flags: { knows_alpha: true }, tokens: { name: '《猎人》', desc: '你发现了兽潮的秘密', score: 250 } },
+    choices: [
+      { text: '向所有人报告发现，制定针对性战术', next: 'day50_horde_arrives' },
+      { text: '先找伊芙琳，她可能知道更多', next: 'day45_evelyn_secret', condition: { hasCompanion: '伊芙琳' }, conditionText: '需要：伊芙琳在队' }
+    ]
+  },
+
+  day45_airdrop_fight: {
+    day: 45,
+    title: '第四十五天·战利品',
+    text: `战斗很短暂，但不干净。\n\n对方没有料到你们会真的动手，第一轮交火后他们失去了两个人，剩下的人撤退了，边跑边喊着威胁。你赢了，但停车场上留下了血迹，有几个人的眼神变得空洞，好像完成了一件他们不愿意再提起的事。物资是丰盛的——枪、弹药、食物，够撑很长时间。代价是某种说不清道不明的东西，像一块石头永久地压在了胸口。\n\n机密文件夹被你亲自撬开。里面是加密的政府文件、坐标数据和一份项目摘要，标题是："方舟计划——移动避难所可行性评估"。摘要显示，有一艘经过改装的军用核潜艇正停泊在近海，被重新设计为长期移动生存平台，代号"方舟"。坐标在文件里。\n\n你把文件折好放进口袋，没有告诉所有人。知道的人越少，活下去的可能越大。`,
+    effects: { flags: { knows_ark: true } },
+    choices: [
+      { text: '研究机密文件中提到的"方舟"计划', next: 'day50_horde_arrives' },
+      { text: '先处理眼前的兽潮威胁', next: 'day50_horde_arrives' }
+    ]
+  },
+
+  day45_airdrop_share: {
+    day: 45,
+    title: '第四十五天·合作',
+    text: `"平分。"你把枪收起来，先伸出了手。\n\n对方沉默了五秒，然后那个短发女人也把枪放下了。她叫方雨，曾经是城市应急管理局的协调员，带着二十几个人从城区突围，一路走到现在。她说她见过很多试图抢劫的幸存者，但没见过主动分享的。那句话说得很轻，但你能听出里面的重量。\n\n物资被整齐地分成两份。方雨的队伍拿走了一半粮食和药品，你们拿走了武器和另一半补给。临走之前，方雨压低声音，说她的队伍从一名被俘的军人那里得到了一条情报：在海岸线方向，政府有一个秘密撤离点，和某个代号"方舟"的计划有关。她说，如果哪天走投无路了，可以去找她，一起去找那个地方。\n\n她留下了一个频率。你记住了。`,
+    effects: { flags: { alliance_fangyu: true } },
+    choices: [
+      { text: '接受联盟，共同面对兽潮', next: 'day50_horde_arrives', effects: { humanity: 5 } },
+      { text: '保持距离，联盟意味着更多责任', next: 'day50_horde_arrives' }
+    ]
+  },
+
+  day45_airdrop_intel: {
+    day: 45,
+    title: '第四十五天·情报',
+    text: `"物资给你们。我只要这个。"\n\n对方愣了一下，然后那个短发女人点了点头，用一种复杂的眼神看着你。你抱着机密文件夹离开了停车场，身后是他们搬运集装箱的声音，有点嘈杂，但没有枪声。某种东西留在了那里，某种你花了三十天才重新找回来的、关于人可以不用杀戮而共存的念想。\n\n文件夹里的内容令你屏住了呼吸。\n\n"方舟计划"——一艘改装核潜艇，作为移动的生存平台部署于近海，设计容量三百人，配备六个月以上的自给自足能力。与之并列的，是关于LY-7病毒的完整感染机制分析，以及一个标注"第三阶段待验证"的疫苗开发路线图。最后一页是一组坐标和一个密语：当你看见三颗红色信号弹，就说出"伊甸"。\n\n这份情报价值无法估量。它改变了你对接下来所有事情的判断。`,
+    effects: { flags: { knows_ark: true, has_vaccine_data: true } },
+    choices: [
+      { text: '这份情报改变了一切，重新规划行动方向', next: 'day50_horde_arrives' }
+    ]
+  },
+
+  day45_evelyn_secret: {
+    day: 45,
+    title: '第四十五天·伊芙琳的秘密',
+    text: `她在你直视她眼睛的那一刻，就知道没办法再藏下去了。\n\n伊芙琳不只是一个外科医生。在灾变之前，她是LY-7病毒研究项目的助理研究员，陈博士最信任的学生。她参与了早期的疫苗试验，注射了不完整的实验性疫苗——那就是为什么当实验室被污染时，她是唯一活下来的人。免疫不是奇迹，是她亲手参与制造的东西留在她血液里的印记。\n\n她一直在重建疫苗配方。每一个夜晚，当所有人都睡着，她在纸上写下她能记起的每一个分子式、每一个实验步骤。她说她有大约百分之七十的把握——如果有一个合适的实验室，有基础的生化设备，也许可以完成剩余的部分。也许。\n\n"我知道这一切的起源，"她说，声音里没有哭腔，但眼睛是红的，"我没有告诉你，是因为我不知道你会不会恨我。我不是在逃避——我是在试图赎罪。"房间里只有你们两个人，窗外是末世的夜空，和她的这句话一起悬在那里，等待你的回应。`,
+    effects: { flags: { evelyn_secret: true }, tokens: { name: '《信任》', desc: '伊芙琳向你坦白了一切', score: 300 } },
+    choices: [
+      { text: '原谅她的隐瞒，支持她继续研究疫苗', next: 'day50_horde_arrives', effects: { humanity: 15 } },
+      { text: '无法接受她的欺骗，但承认疫苗很重要', next: 'day50_horde_arrives', effects: { humanity: 5 } },
+      { text: '你就是制造这一切的人之一？让她离开', next: 'day50_horde_arrives', effects: { companions: { remove: '伊芙琳' }, humanity: -10 } }
+    ]
+  },
+
+  day45_scientist: {
+    day: 45,
+    title: '第四十五天·科学家',
+    text: `他的名字是林博士，五十多岁，眼镜腿用胶布缠着，但手是稳的。\n\n他说他是病毒学家，曾供职于一家国立研究所，在灾变爆发后独自逃出城市。他带着一个金属手提箱，里面是他能带走的全部研究数据——关于LY-7病毒的，关于它为什么会在人类宿主中产生如此具有进攻性的神经改变，以及——他说这句话时停顿了很久——关于一条理论上可行的疫苗路径。\n\n他需要帮助。不是物资，不是枪，而是一个能让他工作的地方，一支愿意保护他走到目的地的队伍，以及足够长的时间让他把理论变成现实。他无法证明自己说的一切，他承认这一点，"但你们也无法证明我是骗子。"他的眼神里有一种科学家特有的固执，那种把某个问题盯死了绝不松手的神情，在这个末世里显得既格格不入，又莫名地令人安心。`,
+    choices: [
+      { text: '相信他，答应帮他到达实验室', next: 'day50_horde_arrives', effects: { flags: { has_lin: true }, humanity: 5 } },
+      { text: '不信任他，但允许他暂时留下观察', next: 'day50_horde_arrives', effects: { flags: { has_lin: true } } },
+      { text: '太可疑了，让他离开', next: 'day50_horde_arrives', effects: { humanity: -5 } }
+    ]
+  },
+
+  day50_horde_arrives: {
+    day: 50,
+    title: '第五十天·兽潮',
+    text: `它来了。\n\n第五十天的凌晨三点，哨兵把所有人叫醒——不是因为看见了什么，而是因为感觉到了。大地在颤抖，一种低频的、持续不断的震动从地面传上来，像心跳，像鼓点，像某种你的身体在本能上认得出的、关于灭顶之灾的语言。然后你们听见了声音，一开始像是风，然后像是河流，然后像是整个世界在嘶叫。\n\n东方天际线变成了黑色。\n\n不是黑夜的黑，而是移动的黑，密集到遮蔽了远方低垂的月光。成千上万具身体，一眼望不到尽头，从地平线延伸到地平线，踩碎了沿途一切阻碍，以一种令人窒息的整体性向前涌动。你站在最高点，看着那堵黑墙一点一点逼近，感受到一种比恐惧更深的东西——一种人类面对自然灾难时才会有的、彻底的、清醒的渺小。\n\n但你还活着。而且你已经做了决定。`,
+    choices: [
+      { text: '正面迎击，这里是我们的家（消耗10发弹药）', next: 'day55_battle', condition: { minAmmo: 10 }, conditionText: '需要至少10发弹药', effects: { ammo: -10 } },
+      { text: '利用地形引导兽潮改变方向', next: 'day55_redirect', condition: { hasFlag: 'knows_alpha' }, conditionText: '需要：了解兽潮秘密' },
+      { text: '放弃据点，全体撤离保命', next: 'day55_flee', effects: { supplies: -20 } }
+    ]
+  },
+
+  day55_battle: {
+    day: 55,
+    title: '第五十五天·血战',
+    text: `三天。三个昼夜，没有一刻是安静的。\n\n第一天，防线勉强守住，付出了两个人受伤的代价。子弹消耗的速度比任何计划都快，近身搏斗填补了弹药的空缺，每个人的手上都有了新的伤疤。第二天最难熬——感染者的数量没有减少的迹象，反而像是被枪声吸引来了更多，有一段防线被突破，用燃烧瓶才重新堵上，但火也烧掉了一部分储备。如果有方雨的队伍支援，增援在第二天深夜抵达，那段时间变成了某种神迹。如果只有你们自己，那三十六小时就是纯粹的地狱。\n\n第三天清晨，兽潮的边缘开始稀薄。不是溃退，更像是潮水终于退去。你站在弹痕累累的墙头，看着遍地的尸体和疲惫到无法再站立的同伴，感觉到某种东西，大概是胜利，但比胜利沉重得多。\n\n你们守住了。代价是真实的，但你们守住了。`,
+    effects: { supplies: -15, humanity: 10, tokens: { name: '《守护者》', desc: '你用血与火守住了家园', score: 350 } },
+    choices: [
+      { text: '清理战场，收治伤员，重建', next: 'day60_aftermath' }
+    ]
+  },
+
+  day55_redirect: {
+    day: 55,
+    title: '第五十五天·引导',
+    text: `如果你知道它们在听谁的，你就知道该对谁说话。\n\n计划分三步。第一步，在Alpha的行进路线上制造足够强烈的干扰——爆炸、声音、火光，打乱它的感知。第二步，在另一个方向设置诱导信号，引导它转向峡谷地形。第三步，在它改变方向时，整个兽潮会跟着它走。这个计划的成功率，没有人知道，只知道失败的代价。\n\n它有效。不是完美地有效，而是足够有效。\n\nAlpha被第一波爆炸打乱了节奏，在它重新寻找方向的间隙，诱导信号把它拉向了峡谷方向，主体兽潮跟着转移了。散兵游勇仍然攻击了营地，有人受伤，有段防线损毁，但与全力迎击相比，伤亡少了八成。Alpha在混乱中被你命中了两枪，但没有倒下——它带着伤消失进了峡谷深处。\n\n你们活了下来，用了大脑而不只是子弹。但那个受伤的Alpha还在某处，而它的存在意味着这件事还没有结束。`,
+    effects: { ammo: -5, tokens: { name: '《智者》', desc: '你用智慧化解了灭顶之灾', score: 400 } },
+    choices: [
+      { text: '追踪受伤的Alpha，一劳永逸', next: 'day60_hunt_alpha' },
+      { text: '见好就收，趁机转移到安全地带', next: 'day60_aftermath' }
+    ]
+  },
+
+  day55_flee: {
+    day: 55,
+    title: '第五十五天·撤退',
+    text: `没有悲壮，只有奔跑。\n\n你下令撤退的那一刻，有人哭了，有人咒骂，有人什么都没说只是开始收拾最重要的东西。兽潮距离营地还有两公里，留给你们的时间是一个小时，也许更少。人们在黑暗中奔跑，背着能背的，丢下背不了的，那些三十天里积攒起来的物品、记忆、在墙上写下的名字——全都留给了那片黑色的海洋。\n\n他们追了三天。或者说，兽潮的边缘一直在身后的某个位置，是不是一次回头都能看到远处移动的轮廓。你们往北走，往高处走，进入了灾变以来很少有人涉足的山区地带，那里的感染者密度极低，是某种绝境中的幸运。\n\n第五十五天的傍晚，你们找到了一处废弃的山地度假村，建筑残破但足够遮风挡雨，关键是：高度足够，视野足够，可以看见任何危险在抵达之前很远的地方。所有人还活着。这是今天唯一重要的事。`,
+    effects: { humanity: -5 },
+    choices: [
+      { text: '在山区建立新的临时营地', next: 'day60_aftermath' }
+    ]
+  },
+
+  day60_aftermath: {
+    day: 60,
+    title: '第六十天·余波',
+    text: `六十天了。\n\n你坐在某处的边缘——墙头，山崖，窗台——看着这个不再是你认识的世界。城市的轮廓在远方，像一具骨架，像一首没有人再唱的歌。兽潮已经过去，留下了破坏，也留下了某种奇异的寂静，像暴风雨之后的海面，波涛消失了，但海水依然是危险的颜色。\n\n六十天前，你以为活过第一周就算赢了。现在你已经不再用"赢"这个词了。只有继续，和停下来。只有前进，和消失。同伴们各自找了个角落沉默着，有人在清点伤口，有人在修补装备，有人只是坐着，眼神放空地望着什么都没有的地方。\n\n如果伊芙琳还在，而她的秘密已经不再是秘密，那么今夜的空气里有一种特别的东西，既不完全是宽慰，也不完全是悲伤，更像是两个人在同一场灾难里，终于找到了一个同样的频率。`,
+    choices: [
+      { text: '与伊芙琳在月光下长谈', next: 'day60_evelyn_romance', condition: { hasCompanion: '伊芙琳', hasFlag: 'evelyn_secret' }, conditionText: '需要：伊芙琳在队且已知秘密' },
+      { text: '与同伴们商议下一步计划', next: 'day65_planning' },
+      { text: '独自巡逻，思考未来', next: 'day65_planning' }
+    ]
+  },
+
+  day60_hunt_alpha: {
+    day: 60,
+    title: '第六十天·狩猎',
+    text: `Alpha留下的血迹是深色的，几乎是黑的，干了之后像柏油路面。\n\n追踪持续了五天。它的路线不是逃窜，而更像是有目的地行进——穿过废弃的工业区，绕开人类活动频繁的区域，最终引导你们来到了城郊一处下沉式建筑群，从外面几乎看不出来，需要走下三段楼梯，才能看见那扇厚重的钢铁大门。一个地下研究设施。\n\nAlpha停在大门外，没有扑向你们，而是用一双对感染者来说过于清醒的眼睛看着你。然后它走进了大门，消失在黑暗里。\n\n你们跟了进去。里面的一切尘封已久，但设备大部分完好：实验台、离心机、培养箱、冷冻柜。墙上钉着一份研究图表，顶部写着一个名字和一行字：受试者编号001，项目代号LY-7，灾变第零天。那就是Alpha。它不是被感染的，它是第一个被注射的，是这一切的起点。它把你带到了这里，作为某种扭曲的告知，或者某种无法言说的引导。`,
+    effects: { flags: { found_lab: true }, tokens: { name: '《追踪者》', desc: '你追踪到了一切的起点', score: 300 } },
+    choices: [
+      { text: '在实验室中寻找疫苗相关设备', next: 'day65_lab' },
+      { text: '消灭Alpha，结束这一切的源头', next: 'day65_kill_alpha', effects: { ammo: -8, humanity: 5 } }
+    ]
+  },
+
+  day60_evelyn_romance: {
+    day: 60,
+    title: '第六十天·月光',
+    text: `夜很深了，但她没有去睡觉，你也没有。\n\n你们坐在屋顶，或者山坡，或者任何一处能看见天空的地方。月亮比末世之前更亮，因为城市的灯光都熄灭了，黑暗让星星和月光变得毫不掩饰。她抱着膝盖，没有说话，但你知道她在想什么，因为你也在想同样的事情。\n\n然后她开口了，说了很多，也说了很少。她说她在实验室工作的时候，从没想过那些数据和报告背后是什么。她说她在逃亡路上第一次开枪的时候，哭了整整一夜。她说她想用疫苗赎罪，但有的时候怀疑赎罪本身是不是一种奢侈。你说了你的一些事。你们就这样说话，声音很轻，好像怕吵醒什么。\n\n快到黎明时，她说："如果我们活下去，我想记住今晚。"她的声音没有颤抖，像是一个约定，像是对某种还没发生的事的先行领取。你握住了她的手。末世里有很多东西被摧毁了，但也有某些东西，只有在这样的黑暗中才能生长。`,
+    effects: { humanity: 10, flags: { evelyn_romance: true }, tokens: { name: '《心动》', desc: '末世中绽放的感情', score: 250 } },
+    choices: [
+      { text: '握住她的手，"我们一定会活下去"', next: 'day65_planning', effects: { humanity: 5 } }
+    ]
+  },
+
+  day65_planning: {
+    day: 65,
+    title: '第六十五天·抉择',
+    text: `六十五天。你把知道的一切摊开在桌子上。\n\n三条路，每一条都通向不同的未来，每一条都要付出不同的代价。你手里有什么，你失去了什么，你遇见了谁——这些都成为了你现在可以走哪条路的依据。没有哪条路是绝对正确的，就像这六十五天里没有哪个选择是无代价的。\n\n方舟计划：如果那份情报是真的，海岸线附近有一艘核潜艇，有容量，有物资，有离开这片废土的可能。走这条路，你需要那个坐标，需要相信一份来自灾变之前的文件。\n\n疫苗：如果伊芙琳的记忆和林博士的数据是准确的，也许真的可以合成一种能阻断感染的东西。走这条路，你需要一个实验室，需要时间，需要相信人类还值得被拯救。\n\n独行：也许这个世界不再需要被拯救，只需要被活过。你一个人，或者带着最亲近的人，用学到的一切在废土上刻出一条属于自己的路。\n\n灯光昏暗，同伴们看向你，等待你说出那个方向。`,
+    choices: [
+      { text: '寻找方舟计划的撤离点——带上所有人，离开这片大陆', next: 'day70_ark_path', condition: { hasFlag: 'knows_ark' }, conditionText: '需要：了解方舟计划' },
+      { text: '前往实验室研制疫苗——这是拯救所有人的唯一希望', next: 'day70_vaccine_path', condition: { hasCompanion: '伊芙琳' }, conditionText: '需要：伊芙琳在队' },
+      { text: '不依靠任何人，凭自己的力量在废土上开辟道路', next: 'day70_lone_path' }
+    ]
+  },
+
+  day65_lab: {
+    day: 65,
+    title: '第六十五天·实验室',
+    text: `地下实验室比任何人想象的都要完整。\n\n备用电池组还有余量，照明系统在尘埃里缓缓亮起，把这个被遗忘的地方从黑暗中拉回来。实验台上留着未完成的实验——离心管里干涸的样本，培养皿中早已消亡的培养物，冰箱里几瓶标签模糊但密封完好的试剂。这里是一座被时间封存的研究遗址，等着有人来继续它未竟的工作。\n\n如果伊芙琳在场，她走进去的第一刻就哭了，不是悲伤，是某种不可言说的、命运回环的感觉。"这里有我需要的一切，"她抬头看你，眼睛里有第一次见到时不曾有的光，"给我十天。也许更少。"\n\n如果只有你自己，实验室依然有价值——设备可以带走，数据可以提取，坐标可以标记，交给任何还活着的科学家。问题是：这个地方已经被发现，Alpha知道你们在这里，它不会一直等着。`,
+    choices: [
+      { text: '让伊芙琳在这里开始疫苗研究', next: 'day70_vaccine_path', condition: { hasCompanion: '伊芙琳' }, conditionText: '需要：伊芙琳在队' },
+      { text: '带走能带的设备，寻找方舟撤离点', next: 'day70_ark_path', condition: { hasFlag: 'knows_ark' }, conditionText: '需要：了解方舟计划' },
+      { text: '炸毁实验室，让这一切永远埋在地下', next: 'day70_lone_path', effects: { humanity: -10, ammo: -5 } }
+    ]
+  },
+
+  day65_kill_alpha: {
+    day: 65,
+    title: '第六十五天·终结',
+    text: `它在地下实验室的最深处等着你。\n\n不是伏击，是等待。它站在实验室核心区域的中央，背对着你，面朝着那面挂着它自己编号的墙，身上的弹伤已经凝固成了深色的痂。你不知道它还有多少意识，不知道它是否理解自己是什么，不知道它把你带到这里的意图究竟是什么。你只知道，只要它还活着，兽潮就还有核心，而那个核心可以重新聚集。\n\n战斗是激烈的。它比任何感染者都快，比任何正常人都强，用了你所有弹药里最宝贵的那些子弹，用了你的一条手臂上一道很深的伤口，用了五分钟里所有的恐惧和决绝。然后它倒下了。\n\n枪声在密闭的地下空间里引来了其他感染者。你带着团队抢出了能带走的数据，在廊道里爆破了入口，封死了那个地方。Alpha已经死了。那份编号001的档案还在你的背包里，和一个你还无法回答的问题一起沉甸甸地压着：结束了一个起点，会有另一个起点吗？`,
+    effects: { tokens: { name: '《屠龙者》', desc: '你消灭了感染源头', score: 450 } },
+    choices: [
+      { text: '带着数据寻找方舟撤离点', next: 'day70_ark_path', condition: { hasFlag: 'knows_ark' }, conditionText: '需要：了解方舟计划' },
+      { text: '用手中的数据寻找疫苗的可能', next: 'day70_vaccine_path', condition: { hasCompanion: '伊芙琳' }, conditionText: '需要：伊芙琳在队' },
+      { text: 'Alpha已死，兽潮将散，独自走向新世界', next: 'day70_lone_path' }
+    ]
+  },
+
+  // === 救世主之路（疫苗）===
+  day70_vaccine_path: {
+    day: 70,
+    title: '第七十天·疫苗之路',
+    text: `伊芙琳不再睡觉了。或者说，她只在绝对撑不住的时候睡两三个小时，然后又回到实验台前。\n\n她说她需要十天。实验室的基础设备足够，但有两种关键试剂库存不足，需要在废弃的医院或化工厂里寻找。她说她百分之八十确定——不是一百，是八十，但在这个世界里，八十已经是奇迹。你在外面忙着搜集她需要的材料，守卫实验室入口，应对那些听到消息赶来的——有的是想得救的幸存者，有的是想抢劫疫苗的武装团体，有的是带着怀疑来核实真假的。\n\n消息在幸存者网络里传播，速度比感染还快。越来越多的人聚集在实验室附近，有人自发组成了外围防卫，有人带来了额外的物资和信息。在这个世界最黑暗的时刻，人们选择聚集而不是逃散，这件事本身已经是某种疫苗——对绝望的。\n\n十天。只需要守住十天。`,
+    choices: [
+      { text: '全力保护伊芙琳，确保疫苗研发完成', next: 'day80_vaccine_defense', effects: { ammo: -5 } },
+      { text: '向所有幸存者广播消息，召集人手', next: 'day80_vaccine_broadcast', effects: { humanity: 10 } }
+    ]
+  },
+
+  day80_vaccine_defense: {
+    day: 80,
+    title: '第八十天·守护',
+    text: `第十天的黎明，伊芙琳走出了实验室。\n\n她手里拿着一支注射器，里面是一毫升半透明的液体，在晨光里几乎透明，像一滴凝固的希望。她的眼睛里有黑眼圈，有泪痕，有某种说不清是精疲力竭还是释放的神情。"我做到了，"她说，声音沙哑，但平静，"原理是正确的。需要更多测试，需要量产，需要分发系统——但它有效。"\n\n第一个测试者是一个在两天前被感染、本已放弃的年轻人。注射后六小时，他的体温开始下降。注射后十二小时，感染标志物的扩散速度减缓了。注射后二十四小时，他睁开眼睛，认出了坐在他旁边的人。\n\n房间里没有欢呼。所有人都沉默着，带着那种只有真正经历过绝境的人才会有的、对奇迹的沉重感知。有人哭了，但哭声很轻，像是不舍得打扰这一刻。你站在伊芙琳旁边，她把头靠在你的肩膀上，不说话。疫苗需要量产，路还很长，但这一刻，已经足够了。`,
+    effects: { ammo: -10, supplies: -10 },
+    choices: [
+      { text: '带着疫苗走向结局', next: 'ending_savior' }
+    ]
+  },
+
+  day80_vaccine_broadcast: {
+    day: 80,
+    title: '第八十天·号召',
+    text: `广播发出的当晚，第一批人第二天早上就到了。\n\n他们来自不同的方向，携带着不同的东西——一个前护士带来了她保存的手术包，一个大学生带来了一箱化学试剂，一支五人武装小队说他们只是来保护实验室的，不需要任何回报。三天之内，实验室外形成了一个自发的营地，有了分工，有了警戒，有了一种在末世里罕见的、以共同目的为核心的秩序。\n\n当另一位医学背景的幸存者核验了伊芙琳的方程式，两个人一起找到了量产的路径——这不再是一个人的赌注，而是所有人的事。第八十天，疫苗原型完成，第一批二十剂被分配给最危急的感染者。成功率是十七分之十七。\n\n有人在营地外的墙上写了一行字，用的是红色油漆，字迹歪斜但清晰："希望从这里开始。"你站在那行字面前，想起了第一天，想起了那些失去的，想起了所有把你带到这里的决定。末世没有结束，但它的方向改变了。`,
+    effects: { humanity: 15 },
+    choices: [
+      { text: '带着疫苗和希望走向结局', next: 'ending_savior' }
+    ]
+  },
+
+  // === 方舟之路 ===
+  day70_ark_path: {
+    day: 70,
+    title: '第七十天·方舟之路',
+    text: `坐标在地图上是一个点，但通往那个点的路上是整个废土。\n\n向海岸线进发的决定做出之后，下一个问题是：带谁走？方舟的容量是有限的——文件里说三百人，但谁知道现在还有多少位置。在过去七十天里，你的队伍已经不是你一个人了，但身边的每一张脸都意味着更多的风险，更多的物资消耗，更低的机动速度。你看着他们，做了那个你不愿意但不得不思考的算术。\n\n一路向东南。废弃的高速公路被尸体和废车堵塞，但公路旁边的田野是可以走的。感染者密度比城区低，但不是没有，每天都有遭遇，每次都消耗弹药和神经。有人提议抛下受伤拖慢速度的，你拒绝了。有人提议用枪威胁路上遇见的幸存者要他们的补给，你也拒绝了。这些拒绝让行进变慢，但让你在镜子里还能认出自己。\n\n海岸线还有大约两天路程。那里有什么，你只知道那份文件里写的东西。相信它，或者不相信它，都是你做的决定。`,
+    choices: [
+      { text: '只带最亲近的同伴，速度优先', next: 'day80_ark_coast', effects: { humanity: -5 } },
+      { text: '沿路收容尽可能多的幸存者一起走', next: 'day80_ark_caravan', effects: { humanity: 15, supplies: -20 } }
+    ]
+  },
+
+  day80_ark_coast: {
+    day: 80,
+    title: '第八十天·海岸',
+    text: `你们在黎明前到达了海岸线。\n\n它真实存在。\n\n海湾深处，距离岸边大约八百米，一个庞大的黑色轮廓半露出水面，灯光昏暗但存在，像一个巨大的沉默生物，在油光的海面上等待。是潜艇，比任何民用船舶都大，上面的灯光按着某种规律闪烁。你掏出文件里记下的密语，举起红色信号弹。\n\n但海滩上也有感染者，不是兽潮，但足够密集。从岸边到信号弹的射程之内，有一段两百米的开阔地带，开阔意味着没有遮挡，没有遮挡意味着每一个感染者都能看见你。你的小队人不多，弹药不多，但步伐很快，你们学会了在七十天里把速度变成最好的防御。\n\n三颗红色信号弹在黎明的天空里燃烧，海面上的轮廓有了动静，一艘小型登陆艇开始向岸边驶来。你低声说出那个词："伊甸。"`,
+    effects: { ammo: -8 },
+    choices: [
+      { text: '冲向方舟，这是最后的机会', next: 'ending_adam_eve' }
+    ]
+  },
+
+  day80_ark_caravan: {
+    day: 80,
+    title: '第八十天·大篷车队',
+    text: `你们一百一十三个人到达了海岸线。\n\n没有人被丢下，这是你七十天出发时做的决定，今天它实现了，代价是你失去了两袋食物，两根肋骨，和十天的行程变成了十四天。但他们都在。老人，孩子，受伤的，走不快的，所有人。\n\n当登陆艇抵达海滩，方舟的军官走下来，看见你们的数量，他沉默了很长时间。"文件上说最大容纳三百人，"他最后说，"但我们现在是一百九十七人。"有位置。他说会分批次接送，每次二十人，需要多次往返。感染者正在向海滩聚集，他们听见了信号弹的声音，或者只是闻见了太多人类的气味，总之他们在来的路上。\n\n但会有足够的时间。你会确保有足够的时间，因为这是你在第一天就已经决定好的事：每一个还活着的人，都有资格活下去。你站在最后一批登船者中间，直到最后一个人踏上登陆艇，才跟着上去。`,
+    effects: { humanity: 10 },
+    choices: [
+      { text: '带领最后一批人登上方舟', next: 'ending_adam_eve' }
+    ]
+  },
+
+  // === 独狼之路 ===
+  day70_lone_path: {
+    day: 70,
+    title: '第七十天·独狼之路',
+    text: `你把地图放回了桌上。\n\n方舟，疫苗，那些都是别人的故事。或者说，那些是你愿意相信但不再需要依靠的故事。七十天，你已经学会了这片废土上所有重要的事：哪种野草可以吃，怎么在不用枪的情况下悄无声息地通过感染者群落，怎么在三分钟内找到一栋楼里最安全的角落，怎么在完全孤独中维持理智。\n\n这些技能，放在任何组织里都是财富，但放在你一个人手里，就是自由。\n\n你不是不爱人，你是太清楚爱会带来什么——责任，束缚，以及在某个午夜看着另一个人被感染时那种无能为力的撕裂感。你受够了失去。也许独自行走，把遇到的所有失去都压缩成一个沉默的结，背在背上，反而是唯一可以持续的方式。\n\n你收拾背包，轻装上路，把多余的物资留给了留下来的人。废土很大。你想去看看它最深处是什么样的。`,
+    choices: [
+      { text: '深入无人区，远离一切人类聚落', next: 'day80_wilderness' },
+      { text: '成为废土上的游侠，帮助遇到的人但不停留', next: 'day80_wanderer', effects: { humanity: 10 } }
+    ]
+  },
+
+  day80_wilderness: {
+    day: 80,
+    title: '第八十天·荒野',
+    text: `你在山谷里找到了一处地方，没有名字，不在任何地图上。\n\n三面环山，一条小溪，废弃的农舍骨架足够遮风挡雨，周围的感染者密度低到几乎为零——也许是地形太过僻远，也许是这里的气味不像人类长期居住。你花了十天把它改造成一个你可以活很长时间的地方：陷阱，储藏，菜园的雏形，一套能在任何天气下生火的系统。\n\n有时候，远处会有烟升起，意味着某个方向有人在活着。你不去。你把那些烟当作风景，当作这片废土上某种脆弱的美丽，证明人类还没有完全消失，但不需要你去介入。你已经帮过足够多的人了，失去过足够多的人了，现在你帮自己。\n\n寂静变成了你最诚实的伴侣。它不说谎，不离开，不要求任何东西。你开始理解，也许世界上有一种生存方式，不需要被叫做孤独，只是——安静。`,
+    choices: [
+      { text: '在废土上刻下你的印记', next: 'ending_lone_wolf' }
+    ]
+  },
+
+  day80_wanderer: {
+    day: 80,
+    title: '第八十天·游侠',
+    text: `你的规则只有一条：不超过三天。\n\n每一个聚居地，你最多停留三天，然后继续走。这条规则让你不会被依赖，不会成为任何人必须保护的对象，也不会让自己有机会真的喜欢上某个地方或某个人。你带着各聚居地之间的信息流动，带着那些被孤立的幸存者群体不知道彼此存在的消息，用脚步把这片废土上零散的人类活动连接成某种松散的网络。\n\n人们开始叫你不同的名字。有的叫你信使，有的叫你幽灵，有的叫你废土行者。有个孩子画了你的速写像，把你画成了一个手持武器站在废墟上的轮廓，贴在营地的公告板上，配文是"他来过"。你在第三天离开前看见了那张画，在离开之后想了很久。\n\n第八十天，你站在一处高地上，能看见三个方向有人类活动的迹象。你选了最少有人提起的那个方向，把背包带拉紧，走下山去。旅程没有终点，这是你选择它的原因，也是你热爱它的原因。`,
+    effects: { tokens: { name: '《游侠》', desc: '你成为了废土上的传说', score: 300 } },
+    choices: [
+      { text: '继续你永无止境的旅程', next: 'ending_lone_wolf' }
+    ]
+  },
+
+  // ============================
+  // ENDINGS
+  // ============================
+
+  ending_savior: {
+    day: 100,
+    title: '第一百天·结局',
+    text: `__ENDING_SAVIOR__`,
+    choices: []
+  },
+
+  ending_adam_eve: {
+    day: 100,
+    title: '第一百天·结局',
+    text: `__ENDING_ARK__`,
+    choices: []
+  },
+
+  ending_lone_wolf: {
+    day: 100,
+    title: '第一百天·结局',
+    text: `__ENDING_LONE_WOLF__`,
+    choices: []
+  }
+};
+
+// ============================================================
+// ENGINE
+// ============================================================
+
+function checkCondition(cond, state) {
+  if (!cond) return true;
+  if (cond.hasCompanion && !state.companions.includes(cond.hasCompanion)) return false;
+  if (cond.noCompanion && state.companions.includes(cond.noCompanion)) return false;
+  if (cond.hasToken && !state.tokens.find(t => t.name === cond.hasToken)) return false;
+  if (cond.minAmmo !== undefined && state.ammo < cond.minAmmo) return false;
+  if (cond.minSupplies !== undefined && state.supplies < cond.minSupplies) return false;
+  if (cond.minHumanity !== undefined && state.humanity < cond.minHumanity) return false;
+  if (cond.hasFlag && !state.flags[cond.hasFlag]) return false;
+  if (cond.noFlag && state.flags[cond.noFlag]) return false;
+  return true;
+}
+
+function applyEffects(effects, state) {
+  if (!effects) return;
+  const changes = {};
+
+  if (effects.humanity !== undefined) {
+    const old = state.humanity;
+    state.humanity = Math.max(0, Math.min(100, state.humanity + effects.humanity));
+    changes.humanity = state.humanity - old;
+  }
+  if (effects.supplies !== undefined) {
+    const old = state.supplies;
+    state.supplies = Math.max(0, state.supplies + effects.supplies);
+    changes.supplies = state.supplies - old;
+  }
+  if (effects.ammo !== undefined) {
+    const old = state.ammo;
+    state.ammo = Math.max(0, state.ammo + effects.ammo);
+    changes.ammo = state.ammo - old;
+  }
+  if (effects.companions) {
+    if (effects.companions.add) {
+      const name = effects.companions.add;
+      if (!state.companions.includes(name)) {
+        state.companions.push(name);
+        changes.companionAdded = name;
+      }
+    }
+    if (effects.companions.remove) {
+      const name = effects.companions.remove;
+      state.companions = state.companions.filter(c => c !== name);
+      changes.companionRemoved = name;
+    }
+  }
+  if (effects.tokens) {
+    if (!state.tokens.find(t => t.name === effects.tokens.name)) {
+      state.tokens.push(effects.tokens);
+      changes.tokenAdded = effects.tokens.name;
+    }
+  }
+  if (effects.flags) {
+    Object.assign(state.flags, effects.flags);
+  }
+
+  return changes;
+}
+
+function showNotifications(changes) {
+  if (!changes) return;
+  playSFX('notify');
+  const container = document.getElementById('notification-container');
+
+  function addNotif(msg, type) {
+    const el = document.createElement('div');
+    el.className = `notif ${type}`;
+    el.textContent = msg;
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 2300);
+  }
+
+  if (changes.humanity) addNotif(`人性 ${changes.humanity > 0 ? '+' : ''}${changes.humanity}`, changes.humanity > 0 ? 'pos' : 'neg');
+  if (changes.supplies) addNotif(`物资 ${changes.supplies > 0 ? '+' : ''}${changes.supplies}`, changes.supplies > 0 ? 'pos' : 'neg');
+  if (changes.ammo) addNotif(`弹药 ${changes.ammo > 0 ? '+' : ''}${changes.ammo}`, changes.ammo > 0 ? 'pos' : 'neg');
+  if (changes.companionAdded) addNotif(`${changes.companionAdded} 加入了队伍`, 'info');
+  if (changes.companionRemoved) addNotif(`${changes.companionRemoved} 离开了队伍`, 'neg');
+  if (changes.tokenAdded) addNotif(`获得印记 ${changes.tokenAdded}`, 'info');
+}
+
+function flashStat(id, direction) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('flash-up', 'flash-down');
+  void el.offsetWidth;
+  el.classList.add(direction === 'up' ? 'flash-up' : 'flash-down');
+  setTimeout(() => el.classList.remove('flash-up', 'flash-down'), 900);
+}
+
+function updateStatusBar() {
+  const h = document.getElementById('stat-humanity');
+  const s = document.getElementById('stat-supplies');
+  const a = document.getElementById('stat-ammo');
+  if (h) h.textContent = G.humanity;
+  if (s) s.textContent = G.supplies;
+  if (a) a.textContent = G.ammo;
+
+  // Danger warnings
+  if (a) {
+    a.classList.toggle('danger', G.ammo <= 0);
+    let warn = a.parentElement.querySelector('.stat-warning');
+    if (G.ammo <= 0) {
+      if (!warn) { warn = document.createElement('span'); warn.className = 'stat-warning'; a.parentElement.appendChild(warn); }
+      warn.textContent = '⚠ 弹尽';
+    } else if (warn) { warn.remove(); }
+  }
+  if (s) {
+    s.classList.toggle('danger', G.supplies <= 5 && G.supplies > 0);
+    let warn = s.parentElement.querySelector('.stat-warning');
+    if (G.supplies <= 5 && G.supplies > 0) {
+      if (!warn) { warn = document.createElement('span'); warn.className = 'stat-warning'; s.parentElement.appendChild(warn); }
+      warn.textContent = '⚠ 告急';
+    } else if (warn) { warn.remove(); }
+  }
+
+  const comp = document.getElementById('companions-display');
+  if (comp) {
+    comp.innerHTML = '';
+    if (G.companions.length > 0) {
+      const label = document.createElement('span');
+      label.className = 'stat-label';
+      label.textContent = '同伴：';
+      comp.appendChild(label);
+      G.companions.forEach(name => {
+        const tag = document.createElement('span');
+        tag.className = 'companion-tag';
+        tag.textContent = name;
+        comp.appendChild(tag);
+      });
+    }
+  }
+}
+
+// ============================================================
+// TYPEWRITER
+// ============================================================
+let typewriterQueue = [];
+let twActive = false;
+
+function typewriterText(text, container, onDone) {
+  if (typewriterTimer) clearTimeout(typewriterTimer);
+  typewriterDone = false;
+  container.innerHTML = '';
+
+  const paragraphs = text.split('\n\n').filter(p => p.trim());
+  let allChars = [];
+
+  paragraphs.forEach((para, pi) => {
+    allChars.push({ type: 'para-start', index: pi });
+    para.split('').forEach(ch => allChars.push({ type: 'char', ch }));
+    if (pi < paragraphs.length - 1) allChars.push({ type: 'para-end' });
+  });
+
+  let charIndex = 0;
+  let currentP = null;
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor-blink';
+
+  function fullRender() {
+    container.innerHTML = '';
+    paragraphs.forEach(para => {
+      const p = document.createElement('p');
+      p.textContent = para;
+      container.appendChild(p);
+    });
+    typewriterDone = true;
+    if (onDone) onDone();
+  }
+
+  container._skipFn = fullRender;
+
+  function step() {
+    if (charIndex >= allChars.length) {
+      if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+      typewriterDone = true;
+      if (onDone) onDone();
+      return;
+    }
+
+    const item = allChars[charIndex++];
+    if (item.type === 'para-start') {
+      currentP = document.createElement('p');
+      container.appendChild(currentP);
+      currentP.appendChild(cursor);
+    } else if (item.type === 'para-end') {
+      if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+    } else {
+      if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+      currentP.appendChild(document.createTextNode(item.ch));
+      currentP.appendChild(cursor);
+    }
+
+    typewriterTimer = setTimeout(step, 30);
+  }
+
+  step();
+}
+
+function skipTypewriter() {
+  if (!typewriterDone) {
+    if (typewriterTimer) clearTimeout(typewriterTimer);
+    const container = document.getElementById('story-text');
+    if (container._skipFn) container._skipFn();
+  }
+}
+
+// ============================================================
+// RANDOM EVENTS
+// ============================================================
+const RANDOM_EVENTS = [
+  { text: '在废墟中找到一箱罐头，运气不错。', effects: { supplies: 5 } },
+  { text: '拐角处遭遇小股感染者，不得不开枪突围。', effects: { ammo: -2 } },
+  { text: '发现一具遇难者的背包，里面还有些有用的东西。', effects: { supplies: 3 } },
+  { text: '路上遇到一个受伤的幸存者，你帮他包扎了伤口。', effects: { humanity: 5 } },
+  { text: '同伴在搜索时被碎玻璃割伤，消耗了医疗物资处理伤口。', effects: { supplies: -3 } },
+  { text: '在一辆废弃警车的后备箱里找到一个弹药箱。', effects: { ammo: 3 } },
+  { text: '突如其来的暴雨冲毁了部分露天存放的物资。', effects: { supplies: -5 } },
+  { text: '在一辆翻倒的军用吉普里发现了枪支弹药。', effects: { ammo: 5 } },
+  { text: '目睹了一群幸存者为了一瓶水互相残杀，这个世界在变。', effects: { humanity: -5 } },
+  { text: '遇到一个流浪商人，用物资换了一些弹药。', effects: { supplies: -3, ammo: 2 } }
+];
+
+let lastRandomEventDay = -1;
+
+function tryTriggerRandomEvent() {
+  if (G.day <= 0 || G.day === lastRandomEventDay) return;
+  if (Math.random() >= 0.10) return;
+  lastRandomEventDay = G.day;
+
+  const evt = RANDOM_EVENTS[Math.floor(Math.random() * RANDOM_EVENTS.length)];
+
+  // Apply effects safely (don't let resources go below 0 in a way that causes instant death)
+  if (evt.effects.ammo && G.ammo + evt.effects.ammo < 0 && G.ammo <= 0) return;
+  if (evt.effects.supplies && G.supplies + evt.effects.supplies <= 0) return;
+
+  const changes = applyEffects(evt.effects, G);
+  updateStatusBar();
+
+  // Show event notification
+  const notif = document.createElement('div');
+  notif.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:1px solid #cc5500;color:#d4d4d4;padding:1.2em 1.5em;border-radius:8px;z-index:9999;max-width:320px;text-align:center;font-size:0.95rem;box-shadow:0 0 20px rgba(204,85,0,0.3);';
+  let effectsText = '';
+  if (changes.supplies) effectsText += ` 物资${changes.supplies > 0 ? '+' : ''}${changes.supplies}`;
+  if (changes.ammo) effectsText += ` 弹药${changes.ammo > 0 ? '+' : ''}${changes.ammo}`;
+  if (changes.humanity) effectsText += ` 人性${changes.humanity > 0 ? '+' : ''}${changes.humanity}`;
+  notif.innerHTML = `<div style="color:#cc5500;font-weight:bold;margin-bottom:0.5em;">⚡ 随机事件</div><div>${evt.text}</div><div style="margin-top:0.5em;color:#888;font-size:0.85em;">${effectsText.trim()}</div>`;
+  document.body.appendChild(notif);
+  setTimeout(() => { notif.style.transition = 'opacity 0.5s'; notif.style.opacity = '0'; setTimeout(() => notif.remove(), 500); }, 3000);
+}
+
+// ============================================================
+// RENDER NODE
+// ============================================================
+function renderNode(nodeId) {
+  if (nodeId === '__RESTART__') {
+    if (confirm('确定要重新开始吗？当前进度将丢失（手动存档不受影响）。')) {
+      restartGame();
+    }
+    return;
+  }
+
+  const node = NODES[nodeId];
+  if (!node) {
+    console.error('Missing node:', nodeId);
+    return;
+  }
+
+  G.currentNode = nodeId;
+  if (node.day !== undefined) G.day = node.day;
+
+  // Apply node-level effects (e.g. shelter_villa supplies+20)
+  if (node.effects) {
+    const nodeChanges = applyEffects(node.effects, G);
+    showNotifications(nodeChanges);
+  }
+
+  // Death check: supplies depleted
+  if (G.supplies <= 0) {
+    triggerDeath('starvation');
+    return;
+  }
+
+  // Autosave
+  autoSave();
+
+  // Random event
+  tryTriggerRandomEvent();
+
+  // Check achievements
+  checkAndUnlockAchievements();
+
+  updateStatusBar();
+
+  // Record to history log
+  const endingMarkers = ['__END_SCREEN__', '__ENDING_SAVIOR__', '__ENDING_ARK__', '__ENDING_LONE_WOLF__'];
+  if (!endingMarkers.includes(node.text)) {
+    historyLog.push({
+      day: G.day,
+      title: node.title || `第 ${G.day} 天`,
+      text: node.text,
+      choiceText: null  // filled by choice handler
+    });
+  }
+
+  // Scene illustration + music
+  renderScene(nodeId);
+  playMoodForScene(nodeId);
+
+  // Day header
+  const dayHeader = document.getElementById('day-header');
+  if (dayHeader) dayHeader.textContent = node.title || `第 ${G.day} 天`;
+
+  // Clear choices while typing
+  const choicesArea = document.getElementById('choices-area');
+  choicesArea.innerHTML = '';
+
+  // Special end screen
+  if (endingMarkers.includes(node.text)) {
+    renderEndScreen(node.text);
+    return;
+  }
+
+  // Typewriter
+  const storyDiv = document.getElementById('story-text');
+  typewriterText(node.text, storyDiv, () => {
+    renderChoices(node.choices, choicesArea);
+  });
+}
+
+function renderChoices(choices, container) {
+  container.innerHTML = '';
+  choices.forEach((choice, idx) => {
+    const available = checkCondition(choice.condition, G);
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn' + (available ? '' : ' disabled');
+
+    const numSpan = document.createElement('span');
+    numSpan.className = 'choice-num';
+    numSpan.textContent = `${idx + 1}.`;
+
+    btn.appendChild(numSpan);
+    btn.appendChild(document.createTextNode(choice.text));
+
+    if (!available && choice.conditionText) {
+      const condSpan = document.createElement('span');
+      condSpan.className = 'choice-condition';
+      condSpan.textContent = `⚠ ${choice.conditionText}`;
+      btn.appendChild(condSpan);
+    }
+
+    if (available) {
+      btn.onclick = () => {
+        if (!typewriterDone) skipTypewriter();
+
+        playSFX('click');
+        // Record choice to history
+        if (historyLog.length > 0) {
+          historyLog[historyLog.length - 1].choiceText = choice.text;
+        }
+
+        // Apply effects
+        const prevH = G.humanity, prevS = G.supplies, prevA = G.ammo;
+        const changes = applyEffects(choice.effects, G);
+
+        // Flash stats
+        if (G.humanity > prevH) flashStat('stat-humanity', 'up');
+        else if (G.humanity < prevH) flashStat('stat-humanity', 'down');
+        if (G.supplies > prevS) flashStat('stat-supplies', 'up');
+        else if (G.supplies < prevS) flashStat('stat-supplies', 'down');
+        if (G.ammo > prevA) flashStat('stat-ammo', 'up');
+        else if (G.ammo < prevA) flashStat('stat-ammo', 'down');
+
+        updateStatusBar();
+        showNotifications(changes);
+        checkAndUnlockAchievements();
+
+        // Death check: ammo=0 random zombie encounter (15% chance per node transition)
+        if (G.ammo <= 0 && Math.random() < 0.15 && G.day > 0) {
+          triggerDeath('zombie');
+          return;
+        }
+        // Death check: supplies=0
+        if (G.supplies <= 0) {
+          triggerDeath('starvation');
+          return;
+        }
+
+        renderNode(choice.next);
+      };
+    }
+
+    container.appendChild(btn);
+  });
+}
+
+function renderEndScreen(marker) {
+  const storyDiv = document.getElementById('story-text');
+  storyDiv.innerHTML = '';
+  typewriterDone = true;
+
+  const totalScore = G.tokens.reduce((sum, t) => sum + (t.score || 0), 0);
+
+  // Determine ending type
+  let endingTitle = '— 第一章完 —';
+  let endingNarrative = '';
+  let endingLabel = '';
+
+  if (marker === '__ENDING_SAVIOR__') {
+    endingLabel = '救世主';
+    endingTitle = '— 结局·救世主 —';
+    endingNarrative = `第一百天。\n\n疫苗开始流通的消息像涟漪一样扩散，比任何枪声都要传得更远。你站在一处不再需要高墙围护的地方，看着人们开始做一些在末世里久违的事情：争论，笑，为明天计划。感染仍然存在，废土仍然危险，但它第一次有了可以被战胜的轮廓。\n\n伊芙琳在你旁边。她剪了头发，比之前短，说是方便做实验。她没有停下来，大概永远不会停下来，直到疫苗覆盖到最后一个幸存者。你也没有停下来，因为她的工作需要保护，而你已经习惯了为值得的东西战斗。\n\n有人在营地的墙上涂了一棵树，绿色的，根扎在废墟里，枝丫伸向天空。孩子们在树下玩耍，发出第一百天里你听见的最真实的声音。\n\n末世没有结束，但人类，还在继续。`;
+  } else if (marker === '__ENDING_ARK__') {
+    endingLabel = '新伊甸';
+    endingTitle = '— 结局·新伊甸 —';
+    endingNarrative = `第一百天。\n\n潜艇在海面上缓慢移动，发动机的震动通过金属舱壁传进每一个人的骨骼里，像一首持续的、关于活着的低语。舷窗外是茫茫的海，干净，蓝，没有感染者，没有废墟，只有水平线和水平线之后的未知。\n\n你们把那段陆地留在了身后。那里有你们的恐惧，你们的失去，你们曾经以为会是坟墓的地方。也有你们的勇气，你们相互扶持走过的每一公里，和那些即使在最黑暗的时候也没有放弃的人。\n\n方舟上有人已经开始画图纸——不是防御工事，是房子，是农场，是某个他们想要在新的地方建造的东西的草稿。你收到了一张，是个孩子画的，笔触歪斜，内容是一座有窗子的房子，窗子里有灯光。\n\n你把那张画折好，放进口袋。带着它，走向新伊甸。`;
+  } else if (marker === '__ENDING_LONE_WOLF__') {
+    endingLabel = '独狼';
+    endingTitle = '— 结局·独狼 —';
+    endingNarrative = `第一百天。\n\n你不知道今天是第一百天，因为你很久以前就停止数日子了。日子只有两种：活过去的，和还没到来的。你在一条没有名字的公路上走着，背包不重，脚步不慢，口袋里有足够今晚用的东西，明天的事明天再说。\n\n身后某个地方，有人在建造新的家园。有人在研究疫苗，有人在寻找方舟，有人在以各种方式试图重建这个被摧毁的世界。你知道这些，因为你路过，你见过，你有时候帮了一点，然后离开了。\n\n你不知道这算不算一种结局。也许不算，也许恰恰算。废土上有各种各样的活法，而你选择的这一种，没有人为你鼓掌，也没有人为你叹息，只有公路，和公路尽头下一个你还没见过的地方。\n\n独狼，继续走。`;
+  } else {
+    // __END_SCREEN__ - legacy chapter 1 end
+    endingLabel = '';
+    endingTitle = '— 第一章完 —';
+    endingNarrative = '你的旅程才刚刚开始……';
+  }
+
+  // Score rating
+  let rating = 'D';
+  if (totalScore >= 2000) rating = 'S';
+  else if (totalScore >= 1500) rating = 'A';
+  else if (totalScore >= 1000) rating = 'B';
+  else if (totalScore >= 500) rating = 'C';
+
+  let html = `<div class="end-section">`;
+
+  if (endingLabel) {
+    html += `<div style="color:var(--rust);font-size:0.75rem;letter-spacing:0.3em;margin-bottom:0.3em;text-transform:uppercase">ENDING</div>
+    <div class="end-title">${endingTitle}</div>
+    <div style="color:var(--text-dim);font-size:0.9rem;line-height:1.9;white-space:pre-line;margin:1em 0 1.5em;border-left:2px solid var(--rust);padding-left:1em">${endingNarrative}</div>`;
+  } else {
+    html += `<div class="end-title">${endingTitle}</div>`;
+  }
+
+  html += `<div class="end-stats">
+      <div class="end-stat-row"><span class="end-stat-label">生存天数</span><span class="end-stat-val">${G.day} 天</span></div>
+      <div class="end-stat-row"><span class="end-stat-label">人性指数</span><span class="end-stat-val">${G.humanity} / 100</span></div>
+      <div class="end-stat-row"><span class="end-stat-label">剩余物资</span><span class="end-stat-val">${G.supplies}</span></div>
+      <div class="end-stat-row"><span class="end-stat-label">剩余弹药</span><span class="end-stat-val">${G.ammo}</span></div>
+      <div class="end-stat-row"><span class="end-stat-label">同行伙伴</span><span class="end-stat-val">${G.companions.length > 0 ? G.companions.join('、') : '无'}</span></div>
+    </div>`;
+
+  if (G.tokens.length > 0) {
+    html += `<div style="color:var(--rust);font-size:0.85rem;letter-spacing:0.2em;margin:1em 0 0.5em">印记收藏</div>
+    <div class="token-list">`;
+    G.tokens.forEach(t => {
+      html += `<div class="token-item">
+        <div><div class="token-name">${t.name}</div><div class="token-desc">${t.desc}</div></div>
+        <div class="token-score">+${t.score}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  } else {
+    html += `<div style="color:var(--text-dim);font-size:0.85rem;margin:1em 0">本次旅程未获得任何印记。</div>`;
+  }
+
+  if (endingLabel) {
+    html += `<div class="total-score" style="font-size:1.1rem">总印记分数：${totalScore} 分　评级：<span style="color:var(--rust);font-size:1.3rem;font-weight:bold">${rating}</span></div>`;
+  } else {
+    if (G.tokens.length > 0) {
+      html += `<div class="total-score">总计印记分数：${totalScore} 分</div>`;
+    }
+    html += `<div style="margin-top:1.5em;color:var(--text-dim);font-size:0.88rem;line-height:2;border-top:1px solid #1a1a1a;padding-top:1em">
+      第二章已经开始……<br>
+      <span style="color:#444">继续你的旅程，面对更大规模的威胁</span>
+    </div>`;
+  }
+
+  html += `</div>`;
+  storyDiv.innerHTML = html;
+
+  const choicesArea = document.getElementById('choices-area');
+  choicesArea.innerHTML = '';
+
+  const btnRestart = document.createElement('button');
+  btnRestart.className = 'choice-btn';
+  btnRestart.innerHTML = '<span class="choice-num">1.</span>重新开始，走一条不同的路';
+  btnRestart.onclick = () => {
+    if (confirm('确定要重新开始吗？当前进度将丢失（手动存档不受影响）。')) restartGame();
+  };
+  choicesArea.appendChild(btnRestart);
+}
+
+// ============================================================
+// SAVE / LOAD
+// ============================================================
+const SAVE_PREFIX = 'zjbt_';
+
+function getSaveData() {
+  return {
+    humanity: G.humanity,
+    supplies: G.supplies,
+    ammo: G.ammo,
+    companions: [...G.companions],
+    tokens: [...G.tokens],
+    flags: { ...G.flags },
+    currentNode: G.currentNode,
+    day: G.day,
+    history: historyLog.slice(-50),
+    savedAt: new Date().toLocaleString('zh-CN')
+  };
+}
+
+function loadSaveData(data) {
+  G.humanity = data.humanity;
+  G.supplies = data.supplies;
+  G.ammo = data.ammo;
+  G.companions = data.companions || [];
+  G.tokens = data.tokens || [];
+  G.flags = data.flags || {};
+  G.currentNode = data.currentNode;
+  G.day = data.day || 0;
+  historyLog = data.history || [];
+}
+
+function autoSave() {
+  try {
+    localStorage.setItem(SAVE_PREFIX + 'auto', JSON.stringify(getSaveData()));
+  } catch (e) {}
+}
+
+function saveToSlot(slot) {
+  try {
+    localStorage.setItem(SAVE_PREFIX + 'slot' + slot, JSON.stringify(getSaveData()));
+    showToast(`已保存到存档 ${slot}`);
+    renderSaveSlots();
+  } catch (e) {
+    showToast('保存失败');
+  }
+}
+
+function loadFromSlot(slot) {
+  try {
+    const raw = localStorage.getItem(SAVE_PREFIX + 'slot' + slot);
+    if (!raw) { showToast('此存档为空'); return; }
+    const data = JSON.parse(raw);
+    loadSaveData(data);
+    closeModal('save-modal');
+    showGameScreen();
+    renderNode(G.currentNode);
+    showToast('读取存档成功');
+  } catch (e) {
+    showToast('读取失败');
+  }
+}
+
+function loadAutoSave() {
+  try {
+    const raw = localStorage.getItem(SAVE_PREFIX + 'auto');
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    loadSaveData(data);
+    return true;
+  } catch (e) { return false; }
+}
+
+function deleteSlot(slot) {
+  if (!confirm(`确定要删除存档 ${slot} 吗？`)) return;
+  localStorage.removeItem(SAVE_PREFIX + 'slot' + slot);
+  renderSaveSlots();
+}
+
+function hasAnySave() {
+  for (let i = 1; i <= 3; i++) {
+    if (localStorage.getItem(SAVE_PREFIX + 'slot' + i)) return true;
+  }
+  return !!localStorage.getItem(SAVE_PREFIX + 'auto');
+}
+
+function getSlotData(slot) {
+  try {
+    const raw = localStorage.getItem(SAVE_PREFIX + 'slot' + slot);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) { return null; }
+}
+
+function renderSaveSlots() {
+  const container = document.getElementById('save-slots-container');
+  if (!container) return;
+  container.innerHTML = '';
+
+  // Autosave info
+  const autoData = getSlotData('auto') || (() => {
+    try { const r = localStorage.getItem(SAVE_PREFIX + 'auto'); return r ? JSON.parse(r) : null; } catch { return null; }
+  })();
+
+  if (autoData) {
+    const autoDiv = document.createElement('div');
+    autoDiv.className = 'save-slot';
+    autoDiv.style.borderColor = '#2a2a2a';
+    autoDiv.innerHTML = `<div class="save-slot-info">
+      <div class="save-slot-name" style="color:var(--text-dim)">自动存档</div>
+      <div class="save-slot-meta">第${autoData.day}天 · ${autoData.savedAt || ''} · 人性:${autoData.humanity} 物资:${autoData.supplies}</div>
+    </div>
+    <div class="save-slot-actions">
+      ${currentSaveTab === 'load' ? `<button class="slot-btn" onclick="loadAutoSaveAndPlay()">读取</button>` : ''}
+    </div>`;
+    container.appendChild(autoDiv);
+  }
+
+  for (let i = 1; i <= 3; i++) {
+    const data = getSlotData(i);
+    const slotDiv = document.createElement('div');
+    slotDiv.className = 'save-slot';
+
+    if (data) {
+      slotDiv.innerHTML = `<div class="save-slot-info">
+        <div class="save-slot-name">存档 ${i}</div>
+        <div class="save-slot-meta">第${data.day}天 · ${data.savedAt || ''} · 人性:${data.humanity} 物资:${data.supplies} 弹药:${data.ammo}</div>
+      </div>
+      <div class="save-slot-actions">
+        ${currentSaveTab === 'save' ? `<button class="slot-btn" onclick="saveToSlot(${i})">覆盖</button>` : `<button class="slot-btn" onclick="loadFromSlot(${i})">读取</button>`}
+        <button class="slot-btn danger" onclick="deleteSlot(${i})">删除</button>
+      </div>`;
+    } else {
+      slotDiv.innerHTML = `<div class="save-slot-info">
+        <div class="save-slot-name" style="color:var(--text-dim)">存档 ${i} — 空</div>
+        <div class="save-slot-meta">暂无存档</div>
+      </div>
+      <div class="save-slot-actions">
+        ${currentSaveTab === 'save' ? `<button class="slot-btn" onclick="saveToSlot(${i})">保存</button>` : ''}
+      </div>`;
+    }
+
+    container.appendChild(slotDiv);
+  }
+}
+
+function loadAutoSaveAndPlay() {
+  try {
+    const raw = localStorage.getItem(SAVE_PREFIX + 'auto');
+    if (!raw) { showToast('无自动存档'); return; }
+    const data = JSON.parse(raw);
+    loadSaveData(data);
+    closeModal('save-modal');
+    showGameScreen();
+    renderNode(G.currentNode);
+    showToast('已读取自动存档');
+  } catch (e) { showToast('读取失败'); }
+}
+
+function switchSaveTab(tab) {
+  currentSaveTab = tab;
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.modal-tab[onclick*="${tab}"]`).classList.add('active');
+  renderSaveSlots();
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function openAbout() {
+  openModal('about-modal');
+}
+
+function openSaveModal() {
+  currentSaveTab = 'save';
+  renderSaveSlots();
+  openModal('save-modal');
+}
+
+function openContinueFromTitle() {
+  const hasContinue = loadAutoSave();
+  if (hasContinue) {
+    document.getElementById('title-screen').classList.add('fade-out');
+    setTimeout(() => {
+      document.getElementById('title-screen').style.display = 'none';
+      showGameScreen();
+      renderNode(G.currentNode);
+    }, 800);
+  } else {
+    currentSaveTab = 'load';
+    renderSaveSlots();
+    openModal('save-modal');
+  }
+}
+
+function confirmRestart() {
+  if (confirm('确定要重新开始吗？当前进度将丢失（手动存档不受影响）。')) {
+    closeModal('save-modal');
+    restartGame();
+  }
+}
+
+function showToast(msg) {
+  const container = document.getElementById('notification-container');
+  const el = document.createElement('div');
+  el.className = 'notif info';
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 2300);
+}
+
+// ============================================================
+// GAME FLOW
+// ============================================================
+function showGameScreen() {
+  document.getElementById('game-screen').style.display = 'flex';
+}
+
+function startNewGame() {
+  G = {
+    humanity: 50,
+    supplies: 80,
+    ammo: 15,
+    companions: [],
+    tokens: [],
+    flags: {},
+    currentNode: 'start',
+    day: 0
+  };
+
+  historyLog = [];
+  const titleScreen = document.getElementById('title-screen');
+  titleScreen.classList.add('fade-out');
+  setTimeout(() => {
+    titleScreen.style.display = 'none';
+    showGameScreen();
+    renderNode('start');
+  }, 800);
+}
+
+function restartGame() {
+  G = {
+    humanity: 50,
+    supplies: 80,
+    ammo: 15,
+    companions: [],
+    tokens: [],
+    flags: {},
+    currentNode: 'start',
+    day: 0
+  };
+  historyLog = [];
+  updateStatusBar();
+  renderNode('start');
+}
+
+// ============================================================
+// SCENE ILLUSTRATIONS & PORTRAITS
+// ============================================================
+const SCENE_SVGS = {
+
+city_ruins: `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky_cr" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a0505"/>
+      <stop offset="55%" stop-color="#0e0808"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+    <linearGradient id="fire_cr" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#cc5500" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#8b0000" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="200" fill="url(#sky_cr)"/>
+  <!-- Stars -->
+  <circle cx="60" cy="20" r="1" fill="#d4d4d4" opacity="0.5" class="anim-star1"/>
+  <circle cx="140" cy="12" r="1" fill="#d4d4d4" opacity="0.4" class="anim-star2"/>
+  <circle cx="310" cy="8" r="1" fill="#d4d4d4" opacity="0.6" class="anim-star3"/>
+  <circle cx="420" cy="18" r="1" fill="#d4d4d4" opacity="0.4" class="anim-star1"/>
+  <!-- Distant moon, red-tinted -->
+  <circle cx="510" cy="35" r="18" fill="#3a0808" opacity="0.9"/>
+  <circle cx="510" cy="35" r="14" fill="#8b0000" opacity="0.5" class="anim-glow"/>
+  <!-- Building silhouettes back layer -->
+  <rect x="0"   y="110" width="45" height="90" fill="#111"/>
+  <rect x="10"  y="95"  width="25" height="15" fill="#111"/>
+  <rect x="50"  y="75"  width="38" height="125" fill="#0d0d0d"/>
+  <rect x="60"  y="68"  width="18" height="10" fill="#0d0d0d"/>
+  <rect x="95"  y="90"  width="30" height="110" fill="#111"/>
+  <rect x="130" y="60"  width="50" height="140" fill="#0d0d0d"/>
+  <rect x="138" y="52"  width="34" height="12" fill="#0d0d0d"/>
+  <rect x="185" y="100" width="35" height="100" fill="#111"/>
+  <rect x="225" y="70"  width="55" height="130" fill="#0d0d0d"/>
+  <rect x="235" y="62"  width="35" height="12" fill="#0d0d0d"/>
+  <!-- Broken building top -->
+  <polygon points="130,60 148,60 155,52 162,58 180,58 180,60 130,60" fill="#0d0d0d"/>
+  <!-- Rubble chunk -->
+  <polygon points="285,140 310,135 320,145 295,150" fill="#1a1a1a"/>
+  <rect x="285" y="80"  width="42" height="120" fill="#0e0e0e"/>
+  <rect x="335" y="95"  width="30" height="105" fill="#111"/>
+  <rect x="370" y="65"  width="48" height="135" fill="#0d0d0d"/>
+  <rect x="380" y="55"  width="28" height="14" fill="#0d0d0d"/>
+  <rect x="420" y="105" width="38" height="95" fill="#111"/>
+  <rect x="462" y="80"  width="40" height="120" fill="#0d0d0d"/>
+  <rect x="470" y="70"  width="22" height="14" fill="#0d0d0d"/>
+  <rect x="505" y="90"  width="45" height="110" fill="#111"/>
+  <rect x="555" y="75"  width="45" height="125" fill="#0d0d0d"/>
+  <!-- Broken windows lit orange -->
+  <rect x="54"  y="82"  width="6" height="8"  fill="#cc5500" opacity="0.3"/>
+  <rect x="138" y="72"  width="8" height="10" fill="#8b0000" opacity="0.4"/>
+  <rect x="232" y="78"  width="7" height="9"  fill="#cc5500" opacity="0.25"/>
+  <rect x="376" y="65"  width="9" height="11" fill="#cc5500" opacity="0.35"/>
+  <!-- Fire glow at base of one building -->
+  <ellipse cx="160" cy="200" rx="55" ry="20" fill="url(#fire_cr)" class="anim-flicker"/>
+  <ellipse cx="380" cy="200" rx="40" ry="15" fill="url(#fire_cr)" class="anim-glow"/>
+  <!-- Smoke wisps -->
+  <ellipse cx="155" cy="58" rx="22" ry="9"  fill="#1a1a1a" opacity="0.55" class="anim-smoke"/>
+  <ellipse cx="175" cy="48" rx="15" ry="7"  fill="#1a1a1a" opacity="0.4"  class="anim-smoke2"/>
+  <ellipse cx="378" cy="55" rx="18" ry="8"  fill="#1a1a1a" opacity="0.5"  class="anim-smoke"/>
+  <!-- Foreground rubble ground -->
+  <rect x="0" y="180" width="600" height="20" fill="#0a0a0a"/>
+  <polygon points="0,180 40,175 80,182 130,176 200,180 260,174 320,180 380,175 450,180 520,176 600,180 600,200 0,200" fill="#111"/>
+  <polygon points="80,182 100,178 115,182" fill="#1a1a1a"/>
+  <polygon points="300,179 320,175 340,180" fill="#1a1a1a"/>
+  <polygon points="480,181 500,177 515,181" fill="#1a1a1a"/>
+</svg>`,
+
+villa: `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky_vi" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#08080f"/>
+      <stop offset="60%" stop-color="#0a0a12"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+    <radialGradient id="moon_vi" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#d4d4d4" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#888" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="200" fill="url(#sky_vi)"/>
+  <!-- Moon -->
+  <circle cx="80" cy="38" r="22" fill="#1a1a2a"/>
+  <circle cx="80" cy="38" r="18" fill="#333" opacity="0.7"/>
+  <circle cx="80" cy="38" r="14" fill="#d4d4d4" opacity="0.15" class="anim-glow"/>
+  <!-- Moon halo -->
+  <circle cx="80" cy="38" r="30" fill="none" stroke="#d4d4d4" stroke-width="1" opacity="0.07"/>
+  <!-- Stars -->
+  <circle cx="200" cy="18" r="1"   fill="#d4d4d4" opacity="0.6" class="anim-star1"/>
+  <circle cx="350" cy="10" r="1.2" fill="#d4d4d4" opacity="0.5" class="anim-star2"/>
+  <circle cx="480" cy="22" r="1"   fill="#d4d4d4" opacity="0.7" class="anim-star3"/>
+  <circle cx="540" cy="14" r="0.8" fill="#d4d4d4" opacity="0.4" class="anim-star1"/>
+  <circle cx="160" cy="30" r="0.8" fill="#d4d4d4" opacity="0.5" class="anim-star3"/>
+  <!-- Distant dark tree line -->
+  <rect x="0"   y="130" width="600" height="70" fill="#0a0a0a"/>
+  <ellipse cx="30"  cy="135" rx="28" ry="35" fill="#0d0d0d"/>
+  <ellipse cx="80"  cy="128" rx="22" ry="30" fill="#0d0d0d"/>
+  <ellipse cx="520" cy="132" rx="25" ry="32" fill="#0d0d0d"/>
+  <ellipse cx="575" cy="125" rx="20" ry="28" fill="#0d0d0d"/>
+  <!-- Villa main structure -->
+  <!-- Body -->
+  <rect x="165" y="100" width="270" height="100" fill="#111"/>
+  <!-- Roof -->
+  <polygon points="150,100 300,55 450,100" fill="#0d0d0d"/>
+  <!-- Roof ridge detail -->
+  <line x1="300" y1="55" x2="300" y2="100" stroke="#1a1a1a" stroke-width="1" opacity="0.5"/>
+  <!-- Chimney -->
+  <rect x="330" y="45" width="18" height="35" fill="#0d0d0d"/>
+  <rect x="327" y="42" width="24" height="6"  fill="#111"/>
+  <!-- Chimney smoke -->
+  <ellipse cx="339" cy="38" rx="10" ry="5" fill="#1a1a1a" opacity="0.4" class="anim-smoke"/>
+  <ellipse cx="342" cy="30" rx="8"  ry="4" fill="#1a1a1a" opacity="0.25" class="anim-smoke2"/>
+  <!-- Windows (broken/dark) -->
+  <rect x="185" y="115" width="35" height="28" fill="#0a0a0a" rx="1"/>
+  <line x1="202" y1="115" x2="202" y2="143" stroke="#1a1a1a" stroke-width="1"/>
+  <line x1="185" y1="129" x2="220" y2="129" stroke="#1a1a1a" stroke-width="1"/>
+  <!-- cracked glass line -->
+  <line x1="195" y1="115" x2="185" y2="128" stroke="#222" stroke-width="0.8"/>
+  <rect x="245" y="115" width="35" height="28" fill="#cc5500" opacity="0.12" rx="1"/>
+  <line x1="262" y1="115" x2="262" y2="143" stroke="#1a1a1a" stroke-width="1"/>
+  <!-- Dim warm window glow -->
+  <rect x="246" y="116" width="33" height="26" fill="#cc5500" opacity="0.08" class="anim-flicker"/>
+  <rect x="350" y="115" width="35" height="28" fill="#0a0a0a" rx="1"/>
+  <line x1="367" y1="115" x2="367" y2="143" stroke="#1a1a1a" stroke-width="1"/>
+  <rect x="390" y="115" width="35" height="28" fill="#8b0000" opacity="0.1" rx="1"/>
+  <!-- Door -->
+  <rect x="277" y="150" width="46" height="50" fill="#0d0d0d" rx="1"/>
+  <rect x="279" y="152" width="20" height="46" fill="#0a0a0a"/>
+  <rect x="301" y="152" width="20" height="46" fill="#0a0a0a"/>
+  <circle cx="299" cy="178" r="2" fill="#333"/>
+  <!-- Garden / overgrown -->
+  <rect x="0" y="185" width="600" height="15" fill="#080808"/>
+  <!-- Overgrown bushes -->
+  <ellipse cx="155" cy="190" rx="30" ry="12" fill="#0d0d0d"/>
+  <ellipse cx="180" cy="193" rx="22" ry="10" fill="#111"/>
+  <ellipse cx="445" cy="190" rx="28" ry="11" fill="#0d0d0d"/>
+  <ellipse cx="420" cy="193" rx="20" ry="9"  fill="#111"/>
+  <!-- Broken fence post -->
+  <rect x="130" y="175" width="5" height="25" fill="#1a1a1a"/>
+  <rect x="460" y="172" width="5" height="28" fill="#1a1a1a" transform="rotate(12,462,180)"/>
+  <!-- Path -->
+  <polygon points="277,200 323,200 310,185 290,185" fill="#0d0d0d"/>
+</svg>`,
+
+bunker: `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky_bk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#050505"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+    <radialGradient id="lamp_bk" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#cc5500" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#cc5500" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="door_glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8b0000" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#8b0000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="200" fill="url(#sky_bk)"/>
+  <!-- Ground / earth surface at top -->
+  <rect x="0" y="0" width="600" height="60" fill="#0d0d0d"/>
+  <!-- Concrete surface texture lines -->
+  <line x1="0" y1="20" x2="600" y2="20" stroke="#111" stroke-width="1" opacity="0.6"/>
+  <line x1="0" y1="40" x2="600" y2="40" stroke="#111" stroke-width="1" opacity="0.6"/>
+  <line x1="100" y1="0" x2="100" y2="60" stroke="#111" stroke-width="0.5" opacity="0.4"/>
+  <line x1="250" y1="0" x2="250" y2="60" stroke="#111" stroke-width="0.5" opacity="0.4"/>
+  <line x1="400" y1="0" x2="400" y2="60" stroke="#111" stroke-width="0.5" opacity="0.4"/>
+  <!-- Entry stairs -->
+  <rect x="230" y="45" width="140" height="10" fill="#111"/>
+  <rect x="240" y="55" width="120" height="10" fill="#111"/>
+  <rect x="250" y="65" width="100" height="10" fill="#111"/>
+  <!-- Door frame -->
+  <rect x="255" y="60" width="90" height="140" fill="#0d0d0d" rx="2"/>
+  <rect x="258" y="63" width="84" height="134" fill="#111" rx="1"/>
+  <!-- Metal door panels -->
+  <rect x="260" y="65" width="38" height="60" fill="#1a1a1a" rx="1"/>
+  <rect x="302" y="65" width="38" height="60" fill="#1a1a1a" rx="1"/>
+  <rect x="260" y="130" width="38" height="60" fill="#1a1a1a" rx="1"/>
+  <rect x="302" y="130" width="38" height="60" fill="#1a1a1a" rx="1"/>
+  <!-- Rivet details -->
+  <circle cx="270" cy="75" r="2" fill="#222"/>
+  <circle cx="290" cy="75" r="2" fill="#222"/>
+  <circle cx="310" cy="75" r="2" fill="#222"/>
+  <circle cx="330" cy="75" r="2" fill="#222"/>
+  <circle cx="270" cy="115" r="2" fill="#222"/>
+  <circle cx="330" cy="115" r="2" fill="#222"/>
+  <!-- Door light seep -->
+  <rect x="258" y="63" width="84" height="5" fill="#cc5500" opacity="0.2" class="anim-flicker"/>
+  <ellipse cx="300" cy="65" rx="50" ry="18" fill="url(#door_glow)" class="anim-glow"/>
+  <!-- Warning sign -->
+  <polygon points="300,85 315,110 285,110" fill="#1a1a1a" stroke="#cc5500" stroke-width="1.5" opacity="0.8"/>
+  <text x="300" y="106" text-anchor="middle" font-size="12" fill="#cc5500" opacity="0.7" font-family="monospace">!</text>
+  <!-- Handle -->
+  <circle cx="299" cy="100" r="4" fill="#333"/>
+  <circle cx="299" cy="100" r="2" fill="#1a1a1a"/>
+  <!-- Overhead lamp -->
+  <rect x="285" y="55" width="30" height="6" fill="#222"/>
+  <polygon points="285,61 315,61 310,72 290,72" fill="#333"/>
+  <ellipse cx="300" cy="72" rx="30" ry="12" fill="url(#lamp_bk)" class="anim-flicker"/>
+  <!-- Underground tunnel walls visible -->
+  <rect x="0"   y="60" width="255" height="140" fill="#0a0a0a"/>
+  <rect x="345" y="60" width="255" height="140" fill="#0a0a0a"/>
+  <!-- Tunnel texture lines -->
+  <line x1="0" y1="80"  x2="255" y2="80"  stroke="#111" stroke-width="0.5"/>
+  <line x1="0" y1="110" x2="255" y2="110" stroke="#111" stroke-width="0.5"/>
+  <line x1="0" y1="140" x2="255" y2="140" stroke="#111" stroke-width="0.5"/>
+  <line x1="0" y1="170" x2="255" y2="170" stroke="#111" stroke-width="0.5"/>
+  <line x1="345" y1="80"  x2="600" y2="80"  stroke="#111" stroke-width="0.5"/>
+  <line x1="345" y1="110" x2="600" y2="110" stroke="#111" stroke-width="0.5"/>
+  <line x1="345" y1="140" x2="600" y2="140" stroke="#111" stroke-width="0.5"/>
+  <!-- Pipes along wall -->
+  <rect x="20"  y="90" width="8" height="110" fill="#1a1a1a" rx="4"/>
+  <rect x="40"  y="90" width="5" height="110" fill="#222"    rx="2"/>
+  <rect x="555" y="90" width="8" height="110" fill="#1a1a1a" rx="4"/>
+  <rect x="570" y="90" width="5" height="110" fill="#222"    rx="2"/>
+  <!-- Ammo crate silhouette beside door -->
+  <rect x="215" y="155" width="35" height="25" fill="#1a1a1a" rx="1"/>
+  <rect x="218" y="152" width="29" height="5"  fill="#222"/>
+  <rect x="365" y="158" width="32" height="22" fill="#1a1a1a" rx="1"/>
+</svg>`,
+
+street: `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky_st" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d0d0d"/>
+      <stop offset="70%" stop-color="#0a0a0a"/>
+      <stop offset="100%" stop-color="#080808"/>
+    </linearGradient>
+    <radialGradient id="streetlight_glow" cx="50%" cy="0%" r="80%">
+      <stop offset="0%" stop-color="#cc5500" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#cc5500" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="200" fill="url(#sky_st)"/>
+  <!-- Stars -->
+  <circle cx="50"  cy="15" r="0.8" fill="#d4d4d4" opacity="0.5" class="anim-star1"/>
+  <circle cx="180" cy="8"  r="1"   fill="#d4d4d4" opacity="0.4" class="anim-star2"/>
+  <circle cx="420" cy="12" r="0.8" fill="#d4d4d4" opacity="0.6" class="anim-star3"/>
+  <!-- Building facades left -->
+  <rect x="0"   y="50"  width="80"  height="150" fill="#0d0d0d"/>
+  <rect x="0"   y="70"  width="80"  height="3"   fill="#111"/>
+  <rect x="0"   y="90"  width="80"  height="3"   fill="#111"/>
+  <rect x="0"   y="110" width="80"  height="3"   fill="#111"/>
+  <rect x="85"  y="65"  width="70"  height="135" fill="#111"/>
+  <!-- Windows dark -->
+  <rect x="10"  y="58"  width="15" height="10" fill="#0a0a0a"/>
+  <rect x="30"  y="58"  width="15" height="10" fill="#0a0a0a"/>
+  <rect x="50"  y="58"  width="15" height="10" fill="#0a0a0a"/>
+  <rect x="10"  y="78"  width="15" height="10" fill="#1a1414" opacity="0.6"/>
+  <rect x="50"  y="78"  width="15" height="10" fill="#0a0a0a"/>
+  <!-- Building facades right -->
+  <rect x="450" y="55"  width="75"  height="145" fill="#0d0d0d"/>
+  <rect x="530" y="40"  width="70"  height="160" fill="#111"/>
+  <rect x="450" y="75"  width="75"  height="3"   fill="#0d0d0d"/>
+  <rect x="450" y="95"  width="75"  height="3"   fill="#0d0d0d"/>
+  <rect x="460" y="62"  width="14"  height="9"   fill="#0a0a0a"/>
+  <rect x="490" y="62"  width="14"  height="9"   fill="#8b0000" opacity="0.15"/>
+  <rect x="540" y="55"  width="14"  height="9"   fill="#0a0a0a"/>
+  <!-- Road perspective -->
+  <polygon points="160,200 440,200 380,120 220,120" fill="#0d0d0d"/>
+  <!-- Road center lines -->
+  <line x1="300" y1="200" x2="300" y2="120" stroke="#1a1a1a" stroke-width="2" stroke-dasharray="8,6"/>
+  <!-- Road markings faded -->
+  <rect x="290" y="175" width="20" height="4" fill="#1a1a1a" opacity="0.5"/>
+  <rect x="290" y="160" width="20" height="4" fill="#1a1a1a" opacity="0.4"/>
+  <rect x="293" y="148" width="14" height="3" fill="#1a1a1a" opacity="0.3"/>
+  <!-- Sidewalk -->
+  <rect x="0"   y="155" width="160" height="45" fill="#0d0d0d"/>
+  <rect x="440" y="155" width="160" height="45" fill="#0d0d0d"/>
+  <!-- Abandoned cars -->
+  <!-- Car 1 left -->
+  <rect x="90"  y="148" width="70"  height="30" fill="#111"   rx="3"/>
+  <rect x="98"  y="138" width="52"  height="12" fill="#111"   rx="2"/>
+  <rect x="100" y="140" width="22"  height="8"  fill="#0a0a0a" rx="1"/>
+  <rect x="126" y="140" width="20"  height="8"  fill="#0a0a0a" rx="1"/>
+  <circle cx="105" cy="180" r="8" fill="#0d0d0d"/>
+  <circle cx="105" cy="180" r="5" fill="#111"/>
+  <circle cx="145" cy="180" r="8" fill="#0d0d0d"/>
+  <circle cx="145" cy="180" r="5" fill="#111"/>
+  <!-- Car 2 right, angled/crashed -->
+  <g transform="rotate(-8,450,165)">
+    <rect x="420" y="148" width="75" height="28" fill="#111" rx="3"/>
+    <rect x="428" y="138" width="55" height="12" fill="#0d0d0d" rx="2"/>
+    <rect x="430" y="140" width="24" height="8"  fill="#0a0a0a" rx="1"/>
+    <circle cx="432" cy="178" r="8" fill="#0d0d0d"/>
+    <circle cx="432" cy="178" r="5" fill="#111"/>
+    <circle cx="482" cy="178" r="8" fill="#0d0d0d"/>
+    <circle cx="482" cy="178" r="5" fill="#111"/>
+  </g>
+  <!-- Streetlight -->
+  <rect x="298" y="85"  width="4"  height="90" fill="#1a1a1a"/>
+  <rect x="282" y="85"  width="20" height="4"  fill="#1a1a1a" rx="1"/>
+  <ellipse cx="292" cy="85" rx="30" ry="15" fill="url(#streetlight_glow)" class="anim-flicker"/>
+  <rect x="285" y="82"  width="6"  height="4"  fill="#cc5500" opacity="0.7" class="anim-flicker"/>
+  <!-- Lone figure in far distance -->
+  <ellipse cx="305" cy="126" rx="3" ry="7" fill="#0d0d0d"/>
+  <circle  cx="305" cy="118" r="3"          fill="#0d0d0d"/>
+  <!-- Ground debris -->
+  <rect x="170" y="193" width="12" height="4" fill="#1a1a1a" rx="1"/>
+  <rect x="390" y="191" width="18" height="5" fill="#1a1a1a" rx="1"/>
+</svg>`,
+
+supermarket: `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ceil_sm" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d0d0d"/>
+      <stop offset="100%" stop-color="#080808"/>
+    </linearGradient>
+    <radialGradient id="light_sm1" cx="50%" cy="0%" r="100%">
+      <stop offset="0%" stop-color="#d4d4d4" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#d4d4d4" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="light_sm2" cx="50%" cy="0%" r="100%">
+      <stop offset="0%" stop-color="#d4d4d4" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#d4d4d4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Ceiling -->
+  <rect width="600" height="200" fill="url(#ceil_sm)"/>
+  <!-- Ceiling tiles grid -->
+  <line x1="0"   y1="30" x2="600" y2="30" stroke="#111" stroke-width="1"/>
+  <line x1="0"   y1="60" x2="600" y2="60" stroke="#111" stroke-width="0.5" opacity="0.5"/>
+  <line x1="100" y1="0"  x2="100" y2="35" stroke="#111" stroke-width="0.5" opacity="0.4"/>
+  <line x1="200" y1="0"  x2="200" y2="35" stroke="#111" stroke-width="0.5" opacity="0.4"/>
+  <line x1="300" y1="0"  x2="300" y2="35" stroke="#111" stroke-width="0.5" opacity="0.4"/>
+  <line x1="400" y1="0"  x2="400" y2="35" stroke="#111" stroke-width="0.5" opacity="0.4"/>
+  <line x1="500" y1="0"  x2="500" y2="35" stroke="#111" stroke-width="0.5" opacity="0.4"/>
+  <!-- Fluorescent lights (some on, some broken) -->
+  <rect x="80"  y="25" width="60" height="5" fill="#333" rx="2"/>
+  <rect x="82"  y="26" width="56" height="3" fill="#d4d4d4" opacity="0.5" class="anim-flicker"/>
+  <ellipse cx="110" cy="30" rx="60" ry="25" fill="url(#light_sm1)" class="anim-flicker"/>
+  <rect x="260" y="25" width="60" height="5" fill="#333" rx="2"/>
+  <rect x="262" y="26" width="56" height="3" fill="#d4d4d4" opacity="0.3"/>
+  <rect x="450" y="25" width="60" height="5" fill="#333" rx="2"/>
+  <rect x="452" y="26" width="56" height="3" fill="#d4d4d4" opacity="0.6" class="anim-flicker"/>
+  <ellipse cx="480" cy="30" rx="60" ry="25" fill="url(#light_sm2)" class="anim-flicker"/>
+  <!-- Floor -->
+  <rect x="0" y="170" width="600" height="30" fill="#0d0d0d"/>
+  <line x1="0" y1="172" x2="600" y2="172" stroke="#111" stroke-width="1"/>
+  <!-- Shelf row 1 -->
+  <rect x="20"  y="80" width="12" height="90" fill="#1a1a1a"/>
+  <rect x="130" y="80" width="12" height="90" fill="#1a1a1a"/>
+  <rect x="20"  y="80" width="122" height="4"  fill="#222"/>
+  <rect x="20"  y="105" width="122" height="4" fill="#222"/>
+  <rect x="20"  y="130" width="122" height="4" fill="#222"/>
+  <rect x="20"  y="155" width="122" height="4" fill="#222"/>
+  <!-- Cans on shelf 1 (mostly knocked over) -->
+  <rect x="30"  y="95"  width="10" height="10" fill="#333" rx="1"/>
+  <rect x="44"  y="97"  width="10" height="10" fill="#2a1a1a" rx="1" transform="rotate(20,44,97)"/>
+  <rect x="80"  y="95"  width="10" height="10" fill="#333" rx="1"/>
+  <rect x="35"  y="158" width="12" height="12" fill="#333" rx="1"/>
+  <rect x="52"  y="162" width="10" height="10" fill="#2a1a1a" rx="1" transform="rotate(-15,52,162)"/>
+  <!-- Shelf row 2 -->
+  <rect x="180" y="75"  width="12" height="95" fill="#1a1a1a"/>
+  <rect x="290" y="75"  width="12" height="95" fill="#1a1a1a"/>
+  <rect x="180" y="75"  width="122" height="4"  fill="#222"/>
+  <rect x="180" y="100" width="122" height="4"  fill="#222"/>
+  <rect x="180" y="125" width="122" height="4"  fill="#222"/>
+  <rect x="180" y="150" width="122" height="4"  fill="#222"/>
+  <!-- Knocked-over shelf row 3 -->
+  <g transform="rotate(12,350,140)">
+    <rect x="340" y="90"  width="12" height="90" fill="#1a1a1a"/>
+    <rect x="440" y="90"  width="12" height="90" fill="#1a1a1a"/>
+    <rect x="340" y="90"  width="112" height="4"  fill="#222"/>
+    <rect x="340" y="115" width="112" height="4"  fill="#222"/>
+  </g>
+  <!-- Scattered debris on floor -->
+  <rect x="150" y="165" width="18" height="6"  fill="#1a1a1a" rx="1" transform="rotate(25,150,165)"/>
+  <rect x="310" y="168" width="14" height="5"  fill="#222"    rx="1"/>
+  <rect x="360" y="164" width="20" height="7"  fill="#1a1a1a" rx="1" transform="rotate(-10,360,164)"/>
+  <rect x="420" y="166" width="12" height="5"  fill="#2a1a1a" rx="1"/>
+  <!-- Broken glass on floor -->
+  <polygon points="200,172 208,170 212,175 203,176" fill="#1a2a2a" opacity="0.6"/>
+  <polygon points="480,170 490,168 494,174 484,175" fill="#1a2a2a" opacity="0.5"/>
+  <!-- Shopping cart tipped over -->
+  <g transform="rotate(90,520,155)">
+    <rect x="505" y="145" width="30" height="22" fill="none" stroke="#222" stroke-width="2"/>
+    <line x1="505" y1="167" x2="500" y2="175" stroke="#222" stroke-width="2"/>
+    <line x1="535" y1="167" x2="540" y2="175" stroke="#222" stroke-width="2"/>
+  </g>
+  <!-- Emergency exit sign glow -->
+  <rect x="560" y="32" width="35" height="16" fill="#8b0000" opacity="0.4" rx="1"/>
+  <text x="577" y="43" text-anchor="middle" font-size="7" fill="#8b0000" opacity="0.8" font-family="monospace">EXIT</text>
+</svg>`,
+
+hospital: `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky_ho" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#050a05"/>
+      <stop offset="60%" stop-color="#080d08"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+    <radialGradient id="green_glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#004400" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#004400" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="red_cross_glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8b0000" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#8b0000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="200" fill="url(#sky_ho)"/>
+  <!-- Stars -->
+  <circle cx="50"  cy="18" r="1"   fill="#d4d4d4" opacity="0.4" class="anim-star2"/>
+  <circle cx="530" cy="12" r="0.8" fill="#d4d4d4" opacity="0.5" class="anim-star1"/>
+  <!-- Ground / approach -->
+  <rect x="0" y="165" width="600" height="35" fill="#0a0a0a"/>
+  <!-- Hospital building main block -->
+  <rect x="100" y="55"  width="400" height="145" fill="#0d0d0d"/>
+  <!-- Wing left -->
+  <rect x="50"  y="90"  width="55"  height="110" fill="#111"/>
+  <!-- Wing right -->
+  <rect x="495" y="90"  width="55"  height="110" fill="#111"/>
+  <!-- Roof parapet -->
+  <rect x="95"  y="50"  width="410" height="10" fill="#111"/>
+  <!-- Red cross sign -->
+  <rect x="273" y="20" width="54" height="54" fill="#0d0d0d" rx="2"/>
+  <rect x="285" y="25" width="30" height="44" fill="#8b0000" opacity="0.7"/>
+  <rect x="278" y="32" width="44" height="30" fill="#8b0000" opacity="0.7"/>
+  <ellipse cx="300" cy="47" rx="35" ry="35" fill="url(#red_cross_glow)" class="anim-glow"/>
+  <!-- Flag pole -->
+  <rect x="299" y="8"  width="2" height="16" fill="#1a1a1a"/>
+  <!-- Windows - grid -->
+  <rect x="115" y="70"  width="20" height="16" fill="#0a1a0a" opacity="0.8"/>
+  <rect x="145" y="70"  width="20" height="16" fill="#0a1a0a" opacity="0.8"/>
+  <rect x="175" y="70"  width="20" height="16" fill="#0a0a0a"/>
+  <rect x="205" y="70"  width="20" height="16" fill="#0a1a0a" opacity="0.6"/>
+  <!-- green tinted windows (eerie) -->
+  <rect x="235" y="70"  width="20" height="16" fill="#003300" opacity="0.5" class="anim-flicker"/>
+  <rect x="345" y="70"  width="20" height="16" fill="#003300" opacity="0.4" class="anim-flicker"/>
+  <rect x="375" y="70"  width="20" height="16" fill="#0a0a0a"/>
+  <rect x="405" y="70"  width="20" height="16" fill="#0a1a0a" opacity="0.7"/>
+  <rect x="435" y="70"  width="20" height="16" fill="#0a0a0a"/>
+  <rect x="465" y="70"  width="20" height="16" fill="#003300" opacity="0.3"/>
+  <!-- Second row windows -->
+  <rect x="115" y="100" width="20" height="16" fill="#0a0a0a"/>
+  <rect x="145" y="100" width="20" height="16" fill="#003300" opacity="0.4"/>
+  <rect x="175" y="100" width="20" height="16" fill="#0a1a0a" opacity="0.5"/>
+  <rect x="205" y="100" width="20" height="16" fill="#0a0a0a"/>
+  <rect x="235" y="100" width="20" height="16" fill="#0a0a0a"/>
+  <rect x="405" y="100" width="20" height="16" fill="#003300" opacity="0.5" class="anim-glow"/>
+  <rect x="435" y="100" width="20" height="16" fill="#0a0a0a"/>
+  <rect x="465" y="100" width="20" height="16" fill="#0a1a0a" opacity="0.3"/>
+  <!-- Green ambient glow from building -->
+  <ellipse cx="300" cy="165" rx="200" ry="30" fill="url(#green_glow)" class="anim-glow"/>
+  <!-- Entrance / broken doors -->
+  <rect x="248" y="130" width="104" height="70" fill="#0a0a0a"/>
+  <rect x="252" y="133" width="45"  height="65" fill="#0d0d0d"/>
+  <rect x="303" y="133" width="45"  height="65" fill="#0d0d0d"/>
+  <!-- broken glass pile -->
+  <polygon points="252,195 280,190 270,195" fill="#1a2a1a" opacity="0.5"/>
+  <!-- Ambulance silhouette -->
+  <rect x="0"   y="148" width="90"  height="40" fill="#111"   rx="2"/>
+  <rect x="5"   y="138" width="55"  height="14" fill="#0d0d0d" rx="1"/>
+  <rect x="8"   y="140" width="22"  height="9"  fill="#0a0a0a" rx="1"/>
+  <rect x="34"  y="140" width="22"  height="9"  fill="#0a0a0a" rx="1"/>
+  <circle cx="18"  cy="190" r="9" fill="#0d0d0d"/>
+  <circle cx="18"  cy="190" r="5" fill="#111"/>
+  <circle cx="72"  cy="190" r="9" fill="#0d0d0d"/>
+  <circle cx="72"  cy="190" r="5" fill="#111"/>
+  <rect x="2"   y="155" width="10" height="6" fill="#8b0000" opacity="0.5"/>
+  <!-- Stretcher near entrance -->
+  <rect x="510" y="155" width="60" height="10" fill="#1a1a1a" rx="1"/>
+  <rect x="506" y="155" width="4"  height="20" fill="#1a1a1a"/>
+  <rect x="570" y="155" width="4"  height="20" fill="#1a1a1a"/>
+</svg>`,
+
+dawn_camp: `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky_dc" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0808"/>
+      <stop offset="50%" stop-color="#1a0f05"/>
+      <stop offset="100%" stop-color="#0f0c08"/>
+    </linearGradient>
+    <radialGradient id="warm_glow_dc" cx="50%" cy="100%" r="80%">
+      <stop offset="0%" stop-color="#cc5500" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#cc5500" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="200" fill="url(#sky_dc)"/>
+  <!-- Stars -->
+  <circle cx="30"  cy="12" r="1"   fill="#d4d4d4" opacity="0.6" class="anim-star1"/>
+  <circle cx="100" cy="8"  r="0.8" fill="#d4d4d4" opacity="0.5" class="anim-star3"/>
+  <circle cx="200" cy="18" r="1"   fill="#d4d4d4" opacity="0.4" class="anim-star2"/>
+  <circle cx="400" cy="10" r="0.8" fill="#d4d4d4" opacity="0.6" class="anim-star1"/>
+  <circle cx="500" cy="6"  r="1"   fill="#d4d4d4" opacity="0.5" class="anim-star3"/>
+  <circle cx="570" cy="20" r="0.8" fill="#d4d4d4" opacity="0.4" class="anim-star2"/>
+  <!-- Warm glow from compound -->
+  <ellipse cx="300" cy="200" rx="280" ry="60" fill="url(#warm_glow_dc)" class="anim-glow"/>
+  <!-- Outer perimeter wall -->
+  <rect x="30"  y="120" width="540" height="80" fill="#111"/>
+  <rect x="30"  y="118" width="540" height="6"  fill="#1a1a1a"/>
+  <!-- Wall texture / panels -->
+  <line x1="80"  y1="118" x2="80"  y2="200" stroke="#0d0d0d" stroke-width="1"/>
+  <line x1="130" y1="118" x2="130" y2="200" stroke="#0d0d0d" stroke-width="1"/>
+  <line x1="180" y1="118" x2="180" y2="200" stroke="#0d0d0d" stroke-width="1"/>
+  <line x1="230" y1="118" x2="230" y2="200" stroke="#0d0d0d" stroke-width="1"/>
+  <line x1="280" y1="118" x2="280" y2="200" stroke="#0d0d0d" stroke-width="1"/>
+  <line x1="330" y1="118" x2="330" y2="200" stroke="#0d0d0d" stroke-width="1"/>
+  <line x1="380" y1="118" x2="380" y2="200" stroke="#0d0d0d" stroke-width="1"/>
+  <line x1="430" y1="118" x2="430" y2="200" stroke="#0d0d0d" stroke-width="1"/>
+  <line x1="480" y1="118" x2="480" y2="200" stroke="#0d0d0d" stroke-width="1"/>
+  <line x1="530" y1="118" x2="530" y2="200" stroke="#0d0d0d" stroke-width="1"/>
+  <!-- Watchtower left -->
+  <rect x="30"  y="65"  width="50"  height="60" fill="#0d0d0d"/>
+  <rect x="22"  y="62"  width="66"  height="8"  fill="#1a1a1a"/>
+  <!-- Watchtower platform floor -->
+  <rect x="22"  y="70"  width="66"  height="4"  fill="#222"/>
+  <!-- Guard silhouette in tower -->
+  <ellipse cx="55" cy="72" rx="5" ry="8" fill="#0a0a0a"/>
+  <circle  cx="55" cy="64" r="4"         fill="#0a0a0a"/>
+  <!-- Watchtower right -->
+  <rect x="520" y="65"  width="50"  height="60" fill="#0d0d0d"/>
+  <rect x="512" y="62"  width="66"  height="8"  fill="#1a1a1a"/>
+  <rect x="512" y="70"  width="66"  height="4"  fill="#222"/>
+  <ellipse cx="545" cy="72" rx="5" ry="8" fill="#0a0a0a"/>
+  <circle  cx="545" cy="64" r="4"         fill="#0a0a0a"/>
+  <!-- Tower lights -->
+  <rect x="48" y="58"  width="14" height="4" fill="#cc5500" opacity="0.6" class="anim-flicker"/>
+  <rect x="538" y="58" width="14" height="4" fill="#cc5500" opacity="0.6" class="anim-flicker"/>
+  <!-- Barbed wire top of wall -->
+  <polyline points="30,118 60,112 90,118 120,112 150,118 180,112 210,118 240,112 270,118 300,112 330,118 360,112 390,118 420,112 450,118 480,112 510,118 540,112 570,118" fill="none" stroke="#333" stroke-width="1.5"/>
+  <!-- Gate in center -->
+  <rect x="250" y="118" width="100" height="82" fill="#0d0d0d"/>
+  <rect x="252" y="120" width="44"  height="78" fill="#111"/>
+  <rect x="304" y="120" width="44"  height="78" fill="#111"/>
+  <!-- Gate bars -->
+  <line x1="262" y1="120" x2="262" y2="198" stroke="#1a1a1a" stroke-width="2"/>
+  <line x1="272" y1="120" x2="272" y2="198" stroke="#1a1a1a" stroke-width="2"/>
+  <line x1="282" y1="120" x2="282" y2="198" stroke="#1a1a1a" stroke-width="2"/>
+  <line x1="314" y1="120" x2="314" y2="198" stroke="#1a1a1a" stroke-width="2"/>
+  <line x1="324" y1="120" x2="324" y2="198" stroke="#1a1a1a" stroke-width="2"/>
+  <line x1="334" y1="120" x2="334" y2="198" stroke="#1a1a1a" stroke-width="2"/>
+  <!-- Lights/windows inside compound -->
+  <rect x="95"  y="135" width="30" height="20" fill="#cc5500" opacity="0.2" class="anim-glow"/>
+  <rect x="150" y="128" width="25" height="18" fill="#cc5500" opacity="0.15"/>
+  <rect x="430" y="135" width="30" height="20" fill="#cc5500" opacity="0.2" class="anim-glow"/>
+  <rect x="480" y="128" width="25" height="18" fill="#cc5500" opacity="0.15"/>
+  <!-- Inside buildings silhouette -->
+  <rect x="90"  y="120" width="100" height="80" fill="#111" opacity="0.7"/>
+  <rect x="410" y="120" width="100" height="80" fill="#111" opacity="0.7"/>
+</svg>`,
+
+military_base: `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky_mb" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#06060a"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+    <radialGradient id="radar_glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#004400" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#004400" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="200" fill="url(#sky_mb)"/>
+  <!-- Stars scattered -->
+  <circle cx="40"  cy="15" r="1"   fill="#d4d4d4" opacity="0.4" class="anim-star2"/>
+  <circle cx="180" cy="10" r="0.8" fill="#d4d4d4" opacity="0.5" class="anim-star1"/>
+  <circle cx="450" cy="8"  r="1"   fill="#d4d4d4" opacity="0.4" class="anim-star3"/>
+  <circle cx="570" cy="18" r="0.8" fill="#d4d4d4" opacity="0.5" class="anim-star2"/>
+  <!-- Ground -->
+  <rect x="0" y="170" width="600" height="30" fill="#0a0a0a"/>
+  <rect x="0" y="170" width="600" height="3"  fill="#111"/>
+  <!-- Chain-link fence -->
+  <rect x="0" y="130" width="600" height="3" fill="#1a1a1a"/>
+  <line x1="30"  y1="130" x2="30"  y2="175" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="80"  y1="130" x2="80"  y2="175" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="130" y1="130" x2="130" y2="175" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="180" y1="130" x2="180" y2="175" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="230" y1="130" x2="230" y2="175" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="280" y1="130" x2="280" y2="175" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="330" y1="130" x2="330" y2="175" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="380" y1="130" x2="380" y2="175" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="430" y1="130" x2="430" y2="175" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="480" y1="130" x2="480" y2="175" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="530" y1="130" x2="530" y2="175" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="580" y1="130" x2="580" y2="175" stroke="#1a1a1a" stroke-width="1.5"/>
+  <!-- Diagonal fence lines -->
+  <line x1="30"  y1="130" x2="80"  y2="145" stroke="#1a1a1a" stroke-width="0.7" opacity="0.5"/>
+  <line x1="80"  y1="130" x2="30"  y2="145" stroke="#1a1a1a" stroke-width="0.7" opacity="0.5"/>
+  <line x1="80"  y1="130" x2="130" y2="145" stroke="#1a1a1a" stroke-width="0.7" opacity="0.5"/>
+  <line x1="130" y1="130" x2="80"  y2="145" stroke="#1a1a1a" stroke-width="0.7" opacity="0.5"/>
+  <!-- Main large building -->
+  <rect x="60"  y="65"  width="200" height="105" fill="#0d0d0d"/>
+  <rect x="55"  y="62"  width="210" height="8"   fill="#111"/>
+  <!-- Building 2 -->
+  <rect x="300" y="80"  width="150" height="90"  fill="#111"/>
+  <rect x="295" y="77"  width="160" height="8"   fill="#1a1a1a"/>
+  <!-- Hangar right -->
+  <rect x="480" y="100" width="120" height="70"  fill="#0d0d0d"/>
+  <rect x="476" y="97"  width="128" height="7"   fill="#111"/>
+  <!-- Hangar arch -->
+  <ellipse cx="540" cy="100" rx="64" ry="20" fill="#0d0d0d"/>
+  <!-- Radar dish -->
+  <rect x="148" y="30" width="4" height="38" fill="#1a1a1a"/>
+  <ellipse cx="150" cy="32" rx="22" ry="10" fill="#1a1a1a" transform="rotate(-20,150,32)"/>
+  <line x1="150" y1="32" x2="128" y2="22" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="150" y1="32" x2="172" y2="22" stroke="#1a1a1a" stroke-width="1.5"/>
+  <ellipse cx="150" cy="32" rx="25" ry="25" fill="url(#radar_glow)" class="anim-glow"/>
+  <!-- Antenna tower -->
+  <rect x="345" y="35" width="3" height="48" fill="#1a1a1a"/>
+  <line x1="346" y1="35" x2="330" y2="55" stroke="#1a1a1a" stroke-width="1"/>
+  <line x1="346" y1="35" x2="362" y2="55" stroke="#1a1a1a" stroke-width="1"/>
+  <circle cx="346" cy="33" r="3" fill="#8b0000" opacity="0.7" class="anim-flicker"/>
+  <!-- Windows on main building -->
+  <rect x="75"  y="80"  width="18" height="14" fill="#0a0a0a"/>
+  <rect x="102" y="80"  width="18" height="14" fill="#003300" opacity="0.5"/>
+  <rect x="129" y="80"  width="18" height="14" fill="#0a0a0a"/>
+  <rect x="156" y="80"  width="18" height="14" fill="#003300" opacity="0.4" class="anim-flicker"/>
+  <rect x="183" y="80"  width="18" height="14" fill="#0a0a0a"/>
+  <rect x="210" y="80"  width="18" height="14" fill="#003300" opacity="0.3"/>
+  <rect x="75"  y="105" width="18" height="14" fill="#003300" opacity="0.5" class="anim-flicker"/>
+  <rect x="102" y="105" width="18" height="14" fill="#0a0a0a"/>
+  <rect x="129" y="105" width="18" height="14" fill="#003300" opacity="0.35"/>
+  <!-- Vehicle in compound -->
+  <rect x="100" y="152" width="80" height="28" fill="#111" rx="2"/>
+  <rect x="108" y="144" width="55" height="12" fill="#0d0d0d" rx="1"/>
+  <circle cx="118" cy="182" r="7" fill="#0d0d0d"/>
+  <circle cx="118" cy="182" r="4" fill="#111"/>
+  <circle cx="162" cy="182" r="7" fill="#0d0d0d"/>
+  <circle cx="162" cy="182" r="4" fill="#111"/>
+</svg>`,
+
+horde: `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky_hr" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a0505"/>
+      <stop offset="40%" stop-color="#140808"/>
+      <stop offset="100%" stop-color="#0a0505"/>
+    </linearGradient>
+    <linearGradient id="dust_hr" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a0a0a" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#1a0a0a" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="200" fill="url(#sky_hr)"/>
+  <!-- Blood-red sun low on horizon -->
+  <ellipse cx="300" cy="85" rx="35" ry="18" fill="#8b0000" opacity="0.5" class="anim-glow"/>
+  <ellipse cx="300" cy="95" rx="60" ry="12" fill="#8b0000" opacity="0.2"/>
+  <!-- Dust cloud layer -->
+  <ellipse cx="300" cy="130" rx="320" ry="45" fill="url(#dust_hr)" class="anim-smoke"/>
+  <ellipse cx="200" cy="140" rx="200" ry="30" fill="url(#dust_hr)" class="anim-smoke2"/>
+  <ellipse cx="420" cy="135" rx="200" ry="28" fill="url(#dust_hr)"/>
+  <!-- Horizon silhouette - massive horde -->
+  <!-- Far distance row (tiny, many) -->
+  <rect x="0"   y="105" width="600" height="4" fill="#1a0808" opacity="0.6"/>
+  <!-- Mid-distance silhouettes -->
+  <ellipse cx="20"  cy="120" rx="8"  ry="12" fill="#1a0a0a"/>
+  <ellipse cx="45"  cy="118" rx="7"  ry="11" fill="#1a0808"/>
+  <ellipse cx="70"  cy="122" rx="9"  ry="13" fill="#1a0a0a"/>
+  <ellipse cx="95"  cy="117" rx="7"  ry="11" fill="#1a0808"/>
+  <ellipse cx="118" cy="121" rx="8"  ry="12" fill="#1a0a0a"/>
+  <ellipse cx="142" cy="119" rx="7"  ry="10" fill="#1a0808"/>
+  <ellipse cx="165" cy="122" rx="9"  ry="13" fill="#1a0a0a"/>
+  <ellipse cx="190" cy="118" rx="7"  ry="11" fill="#1a0808"/>
+  <ellipse cx="214" cy="120" rx="8"  ry="12" fill="#1a0a0a"/>
+  <ellipse cx="238" cy="117" rx="7"  ry="10" fill="#1a0808"/>
+  <ellipse cx="260" cy="121" rx="9"  ry="13" fill="#1a0a0a"/>
+  <ellipse cx="285" cy="118" rx="7"  ry="11" fill="#1a0808"/>
+  <ellipse cx="308" cy="120" rx="8"  ry="12" fill="#1a0a0a"/>
+  <ellipse cx="332" cy="117" rx="7"  ry="10" fill="#1a0808"/>
+  <ellipse cx="355" cy="122" rx="9"  ry="13" fill="#1a0a0a"/>
+  <ellipse cx="378" cy="118" rx="7"  ry="11" fill="#1a0808"/>
+  <ellipse cx="402" cy="120" rx="8"  ry="12" fill="#1a0a0a"/>
+  <ellipse cx="425" cy="117" rx="7"  ry="10" fill="#1a0808"/>
+  <ellipse cx="448" cy="121" rx="9"  ry="13" fill="#1a0a0a"/>
+  <ellipse cx="472" cy="118" rx="7"  ry="11" fill="#1a0808"/>
+  <ellipse cx="495" cy="120" rx="8"  ry="12" fill="#1a0a0a"/>
+  <ellipse cx="518" cy="117" rx="7"  ry="10" fill="#1a0808"/>
+  <ellipse cx="542" cy="122" rx="9"  ry="13" fill="#1a0a0a"/>
+  <ellipse cx="565" cy="118" rx="7"  ry="11" fill="#1a0808"/>
+  <ellipse cx="588" cy="120" rx="8"  ry="12" fill="#1a0a0a"/>
+  <!-- Close row - larger, more defined -->
+  <ellipse cx="15"  cy="165" rx="14" ry="22" fill="#111"/>
+  <circle  cx="15"  cy="142" r="9"           fill="#111"/>
+  <ellipse cx="52"  cy="160" rx="13" ry="20" fill="#0d0d0d"/>
+  <circle  cx="52"  cy="139" r="8"           fill="#0d0d0d"/>
+  <ellipse cx="88"  cy="168" rx="15" ry="24" fill="#111"/>
+  <circle  cx="88"  cy="143" r="10"          fill="#111"/>
+  <ellipse cx="128" cy="163" rx="13" ry="21" fill="#0d0d0d"/>
+  <circle  cx="128" cy="141" r="9"           fill="#0d0d0d"/>
+  <ellipse cx="165" cy="170" rx="14" ry="23" fill="#111"/>
+  <circle  cx="165" cy="146" r="9"           fill="#111"/>
+  <ellipse cx="205" cy="162" rx="13" ry="20" fill="#0d0d0d"/>
+  <circle  cx="205" cy="141" r="8"           fill="#0d0d0d"/>
+  <ellipse cx="242" cy="167" rx="15" ry="25" fill="#111"/>
+  <circle  cx="242" cy="141" r="10"          fill="#111"/>
+  <ellipse cx="282" cy="160" rx="13" ry="20" fill="#0d0d0d"/>
+  <circle  cx="282" cy="139" r="9"           fill="#0d0d0d"/>
+  <ellipse cx="320" cy="170" rx="16" ry="26" fill="#111"/>
+  <circle  cx="320" cy="143" r="11"          fill="#111"/>
+  <ellipse cx="362" cy="162" rx="13" ry="21" fill="#0d0d0d"/>
+  <circle  cx="362" cy="140" r="9"           fill="#0d0d0d"/>
+  <ellipse cx="400" cy="168" rx="15" ry="24" fill="#111"/>
+  <circle  cx="400" cy="143" r="10"          fill="#111"/>
+  <ellipse cx="440" cy="163" rx="13" ry="20" fill="#0d0d0d"/>
+  <circle  cx="440" cy="142" r="8"           fill="#0d0d0d"/>
+  <ellipse cx="478" cy="170" rx="14" ry="23" fill="#111"/>
+  <circle  cx="478" cy="146" r="9"           fill="#111"/>
+  <ellipse cx="518" cy="165" rx="13" ry="21" fill="#0d0d0d"/>
+  <circle  cx="518" cy="143" r="9"           fill="#0d0d0d"/>
+  <ellipse cx="556" cy="168" rx="15" ry="25" fill="#111"/>
+  <circle  cx="556" cy="142" r="10"          fill="#111"/>
+  <ellipse cx="592" cy="162" rx="13" ry="20" fill="#0d0d0d"/>
+  <circle  cx="592" cy="141" r="8"           fill="#0d0d0d"/>
+  <!-- Ground fill -->
+  <rect x="0" y="182" width="600" height="18" fill="#0a0505"/>
+</svg>`,
+
+forest: `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky_fo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#060810"/>
+      <stop offset="100%" stop-color="#080a0a"/>
+    </linearGradient>
+    <radialGradient id="moon_fo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#d4d4d4" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#d4d4d4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="200" fill="url(#sky_fo)"/>
+  <!-- Moon through canopy -->
+  <circle cx="300" cy="30" r="20" fill="#1a1a2a"/>
+  <circle cx="300" cy="30" r="15" fill="#d4d4d4" opacity="0.12" class="anim-glow"/>
+  <ellipse cx="300" cy="30" rx="50" ry="50" fill="url(#moon_fo)" class="anim-glow"/>
+  <!-- Stars between branches -->
+  <circle cx="80"  cy="15" r="1"   fill="#d4d4d4" opacity="0.5" class="anim-star1"/>
+  <circle cx="420" cy="20" r="0.8" fill="#d4d4d4" opacity="0.5" class="anim-star2"/>
+  <circle cx="520" cy="10" r="1"   fill="#d4d4d4" opacity="0.4" class="anim-star3"/>
+  <!-- Forest path (narrow) -->
+  <polygon points="260,200 340,200 310,80 290,80" fill="#0d0d0d"/>
+  <polygon points="268,200 332,200 305,100 295,100" fill="#111" opacity="0.5"/>
+  <!-- Tree trunks back layer -->
+  <rect x="0"   y="50" width="18" height="150" fill="#0d0d0d"/>
+  <rect x="40"  y="35" width="22" height="165" fill="#0d0d0d"/>
+  <rect x="80"  y="55" width="16" height="145" fill="#111"/>
+  <rect x="115" y="40" width="20" height="160" fill="#0d0d0d"/>
+  <rect x="155" y="50" width="18" height="150" fill="#111"/>
+  <rect x="185" y="38" width="22" height="162" fill="#0d0d0d"/>
+  <rect x="230" y="55" width="16" height="145" fill="#111"/>
+  <!-- Right side trees -->
+  <rect x="365" y="55" width="16" height="145" fill="#111"/>
+  <rect x="395" y="38" width="22" height="162" fill="#0d0d0d"/>
+  <rect x="440" y="50" width="18" height="150" fill="#111"/>
+  <rect x="475" y="42" width="20" height="158" fill="#0d0d0d"/>
+  <rect x="510" y="55" width="16" height="145" fill="#111"/>
+  <rect x="545" y="35" width="22" height="165" fill="#0d0d0d"/>
+  <rect x="578" y="50" width="22" height="150" fill="#111"/>
+  <!-- Canopy layer left -->
+  <ellipse cx="9"   cy="52"  rx="45"  ry="38" fill="#0a0a0a"/>
+  <ellipse cx="51"  cy="38"  rx="50"  ry="35" fill="#0d0d0d"/>
+  <ellipse cx="88"  cy="55"  rx="42"  ry="32" fill="#0a0a0a"/>
+  <ellipse cx="125" cy="42"  rx="48"  ry="36" fill="#0d0d0d"/>
+  <ellipse cx="164" cy="52"  rx="44"  ry="33" fill="#0a0a0a"/>
+  <ellipse cx="196" cy="40"  rx="50"  ry="35" fill="#0d0d0d"/>
+  <ellipse cx="239" cy="56"  rx="42"  ry="30" fill="#0a0a0a"/>
+  <!-- Canopy layer right -->
+  <ellipse cx="373" cy="56"  rx="42"  ry="30" fill="#0a0a0a"/>
+  <ellipse cx="404" cy="40"  rx="50"  ry="35" fill="#0d0d0d"/>
+  <ellipse cx="449" cy="52"  rx="44"  ry="33" fill="#0a0a0a"/>
+  <ellipse cx="485" cy="44"  rx="48"  ry="36" fill="#0d0d0d"/>
+  <ellipse cx="519" cy="56"  rx="42"  ry="32" fill="#0a0a0a"/>
+  <ellipse cx="556" cy="38"  rx="50"  ry="35" fill="#0d0d0d"/>
+  <ellipse cx="589" cy="52"  rx="45"  ry="38" fill="#0a0a0a"/>
+  <!-- Ground undergrowth -->
+  <rect x="0"   y="175" width="600" height="25" fill="#080808"/>
+  <ellipse cx="50"  cy="178" rx="55" ry="12" fill="#0a0a0a"/>
+  <ellipse cx="160" cy="180" rx="45" ry="10" fill="#0d0d0d"/>
+  <ellipse cx="450" cy="178" rx="50" ry="11" fill="#0a0a0a"/>
+  <ellipse cx="560" cy="180" rx="45" ry="10" fill="#0d0d0d"/>
+  <!-- Foreground roots -->
+  <path d="M0,200 Q30,185 60,200" fill="#0d0d0d"/>
+  <path d="M180,200 Q210,188 240,200" fill="#0d0d0d"/>
+  <path d="M380,200 Q410,188 440,200" fill="#0d0d0d"/>
+  <!-- Figure on path (small, lone) -->
+  <ellipse cx="300" cy="148" rx="5" ry="10" fill="#0a0a0a"/>
+  <circle  cx="300" cy="137" r="5"           fill="#0a0a0a"/>
+</svg>`,
+
+coast: `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky_co" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#050810"/>
+      <stop offset="60%" stop-color="#080a14"/>
+      <stop offset="100%" stop-color="#0a0c10"/>
+    </linearGradient>
+    <linearGradient id="water_co" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0c14"/>
+      <stop offset="100%" stop-color="#080810"/>
+    </linearGradient>
+    <radialGradient id="flare1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#cc5500" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#cc5500" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="flare2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8b0000" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#8b0000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="200" fill="url(#sky_co)"/>
+  <!-- Stars -->
+  <circle cx="30"  cy="18" r="1"   fill="#d4d4d4" opacity="0.6" class="anim-star1"/>
+  <circle cx="80"  cy="10" r="0.8" fill="#d4d4d4" opacity="0.5" class="anim-star2"/>
+  <circle cx="150" cy="22" r="1"   fill="#d4d4d4" opacity="0.4" class="anim-star3"/>
+  <circle cx="250" cy="8"  r="0.8" fill="#d4d4d4" opacity="0.6" class="anim-star1"/>
+  <circle cx="480" cy="14" r="1"   fill="#d4d4d4" opacity="0.5" class="anim-star2"/>
+  <circle cx="550" cy="6"  r="0.8" fill="#d4d4d4" opacity="0.4" class="anim-star3"/>
+  <!-- Moon reflection on water -->
+  <circle cx="300" cy="28" r="16" fill="#1a1a2a"/>
+  <circle cx="300" cy="28" r="12" fill="#d4d4d4" opacity="0.1" class="anim-glow"/>
+  <!-- Horizon / water surface -->
+  <rect x="0" y="110" width="600" height="90" fill="url(#water_co)"/>
+  <line x1="0" y1="110" x2="600" y2="110" stroke="#111" stroke-width="1"/>
+  <!-- Water ripples -->
+  <line x1="0"   y1="120" x2="600" y2="120" stroke="#0d0d0d" stroke-width="1" opacity="0.6"/>
+  <line x1="0"   y1="132" x2="600" y2="132" stroke="#0d0d0d" stroke-width="1" opacity="0.5"/>
+  <line x1="0"   y1="145" x2="600" y2="145" stroke="#0d0d0d" stroke-width="1" opacity="0.4"/>
+  <line x1="0"   y1="160" x2="600" y2="160" stroke="#0d0d0d" stroke-width="1" opacity="0.3"/>
+  <!-- Moon reflection strip in water -->
+  <rect x="285" y="110" width="30" height="90" fill="#d4d4d4" opacity="0.04"/>
+  <!-- Coastline cliff (left) -->
+  <polygon points="0,200 0,80 120,95 160,105 200,110 0,200" fill="#0d0d0d"/>
+  <!-- Rocks -->
+  <ellipse cx="180" cy="112" rx="25" ry="10" fill="#111"/>
+  <ellipse cx="210" cy="115" rx="18" ry="8"  fill="#0d0d0d"/>
+  <!-- Submarine silhouette in water -->
+  <ellipse cx="380" cy="118" rx="100" ry="14" fill="#111"/>
+  <ellipse cx="340" cy="115" rx="30"  ry="8"  fill="#0d0d0d"/>
+  <!-- Conning tower -->
+  <rect x="370" y="100" width="28" height="20" fill="#111"/>
+  <rect x="375" y="95"  width="18" height="8"  fill="#0d0d0d"/>
+  <rect x="380" y="90"  width="8"  height="8"  fill="#1a1a1a"/>
+  <!-- Antenna on sub -->
+  <line x1="392" y1="90" x2="392" y2="75" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="384" y1="90" x2="384" y2="78" stroke="#1a1a1a" stroke-width="1"/>
+  <!-- Signal flares in sky -->
+  <ellipse cx="420" cy="35" rx="6" ry="6" fill="url(#flare1)" class="anim-glow"/>
+  <line x1="420" y1="35" x2="420" y2="90" stroke="#cc5500" stroke-width="1" opacity="0.3"/>
+  <ellipse cx="460" cy="22" rx="5" ry="5" fill="url(#flare2)" class="anim-glow"/>
+  <line x1="460" y1="22" x2="460" y2="90" stroke="#8b0000" stroke-width="1" opacity="0.25"/>
+  <ellipse cx="490" cy="40" rx="4" ry="4" fill="url(#flare1)" class="anim-glow"/>
+  <!-- Cliff right side -->
+  <polygon points="600,200 600,85 520,100 480,108 440,113 600,200" fill="#0d0d0d"/>
+</svg>`,
+
+lab: `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ceil_lb" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#040808"/>
+      <stop offset="100%" stop-color="#080808"/>
+    </linearGradient>
+    <radialGradient id="screen_glow1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#003300" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#003300" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="screen_glow2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#002200" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#002200" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="200" fill="url(#ceil_lb)"/>
+  <!-- Corridor ceiling -->
+  <rect x="0" y="0" width="600" height="25" fill="#0d0d0d"/>
+  <!-- Ceiling duct/pipe -->
+  <rect x="0" y="8"  width="600" height="10" fill="#111"/>
+  <line x1="100" y1="8" x2="100" y2="18" stroke="#0d0d0d" stroke-width="1"/>
+  <line x1="200" y1="8" x2="200" y2="18" stroke="#0d0d0d" stroke-width="1"/>
+  <line x1="300" y1="8" x2="300" y2="18" stroke="#0d0d0d" stroke-width="1"/>
+  <line x1="400" y1="8" x2="400" y2="18" stroke="#0d0d0d" stroke-width="1"/>
+  <line x1="500" y1="8" x2="500" y2="18" stroke="#0d0d0d" stroke-width="1"/>
+  <!-- Emergency lighting strip -->
+  <rect x="0" y="22" width="600" height="3" fill="#003300" opacity="0.6" class="anim-flicker"/>
+  <!-- Sterile corridor walls -->
+  <rect x="0"   y="25" width="20"  height="175" fill="#0d0d0d"/>
+  <rect x="580" y="25" width="20"  height="175" fill="#0d0d0d"/>
+  <!-- Wall tile grid lines -->
+  <line x1="20"  y1="50"  x2="580" y2="50"  stroke="#111" stroke-width="0.5"/>
+  <line x1="20"  y1="75"  x2="580" y2="75"  stroke="#111" stroke-width="0.5"/>
+  <line x1="20"  y1="100" x2="580" y2="100" stroke="#111" stroke-width="0.5"/>
+  <line x1="20"  y1="125" x2="580" y2="125" stroke="#111" stroke-width="0.5"/>
+  <line x1="20"  y1="150" x2="580" y2="150" stroke="#111" stroke-width="0.5"/>
+  <line x1="20"  y1="175" x2="580" y2="175" stroke="#111" stroke-width="0.5"/>
+  <!-- Floor -->
+  <rect x="0" y="175" width="600" height="25" fill="#0d0d0d"/>
+  <line x1="0" y1="177" x2="600" y2="177" stroke="#111" stroke-width="1"/>
+  <!-- Monitor screens left cluster -->
+  <rect x="30"  y="45" width="80"  height="60" fill="#001100" rx="2"/>
+  <rect x="32"  y="47" width="76"  height="56" fill="#002200" rx="1" class="anim-glow"/>
+  <!-- Screen content lines (data readouts) -->
+  <line x1="38"  y1="56" x2="100" y2="56" stroke="#00aa00" stroke-width="0.8" opacity="0.5"/>
+  <line x1="38"  y1="63" x2="85"  y2="63" stroke="#00aa00" stroke-width="0.8" opacity="0.4"/>
+  <line x1="38"  y1="70" x2="95"  y2="70" stroke="#00aa00" stroke-width="0.8" opacity="0.5"/>
+  <line x1="38"  y1="77" x2="78"  y2="77" stroke="#00aa00" stroke-width="0.8" opacity="0.3"/>
+  <line x1="38"  y1="84" x2="90"  y2="84" stroke="#00aa00" stroke-width="0.8" opacity="0.5"/>
+  <line x1="38"  y1="91" x2="70"  y2="91" stroke="#00aa00" stroke-width="0.8" opacity="0.4"/>
+  <ellipse cx="70" cy="68" rx="50" ry="40" fill="url(#screen_glow1)" class="anim-glow"/>
+  <!-- Second screen -->
+  <rect x="30"  y="115" width="80"  height="55" fill="#001100" rx="2"/>
+  <rect x="32"  y="117" width="76"  height="51" fill="#001500" rx="1"/>
+  <!-- Graph bars -->
+  <rect x="38"  y="140" width="8"  height="22" fill="#003300" opacity="0.8"/>
+  <rect x="50"  y="132" width="8"  height="30" fill="#003300" opacity="0.9"/>
+  <rect x="62"  y="148" width="8"  height="14" fill="#003300" opacity="0.7"/>
+  <rect x="74"  y="135" width="8"  height="27" fill="#003300" opacity="0.8"/>
+  <rect x="86"  y="143" width="8"  height="19" fill="#003300" opacity="0.7"/>
+  <!-- Test tube rack center -->
+  <rect x="265" y="60"  width="70"  height="10" fill="#1a1a1a" rx="1"/>
+  <rect x="272" y="70"  width="8"   height="35" fill="#1a1a2a" rx="2"/>
+  <rect x="284" y="70"  width="8"   height="30" fill="#002200" rx="2" opacity="0.8"/>
+  <rect x="296" y="70"  width="8"   height="38" fill="#1a1a2a" rx="2"/>
+  <rect x="308" y="70"  width="8"   height="32" fill="#002200" rx="2" opacity="0.6"/>
+  <rect x="320" y="70"  width="8"   height="35" fill="#1a2a1a" rx="2"/>
+  <!-- Test tube green glow -->
+  <ellipse cx="288" cy="85" rx="12" ry="20" fill="url(#screen_glow2)" class="anim-glow"/>
+  <ellipse cx="312" cy="85" rx="12" ry="20" fill="url(#screen_glow2)"/>
+  <!-- Lab bench -->
+  <rect x="230" y="105" width="140" height="8"  fill="#1a1a1a" rx="1"/>
+  <rect x="234" y="113" width="8"   height="62" fill="#1a1a1a"/>
+  <rect x="358" y="113" width="8"   height="62" fill="#1a1a1a"/>
+  <!-- Large screen right -->
+  <rect x="460" y="38"  width="120" height="90" fill="#001100" rx="2"/>
+  <rect x="462" y="40"  width="116" height="86" fill="#001800" rx="1" class="anim-glow"/>
+  <!-- DNA helix suggestion -->
+  <path d="M480,50 Q520,65 480,80 Q520,95 480,110 Q520,125" fill="none" stroke="#003300" stroke-width="2" opacity="0.5"/>
+  <path d="M560,50 Q520,65 560,80 Q520,95 560,110 Q520,125" fill="none" stroke="#003300" stroke-width="2" opacity="0.5"/>
+  <line x1="485" y1="60" x2="555" y2="68" stroke="#003300" stroke-width="1" opacity="0.4"/>
+  <line x1="485" y1="72" x2="555" y2="80" stroke="#003300" stroke-width="1" opacity="0.4"/>
+  <line x1="485" y1="90" x2="555" y2="98" stroke="#003300" stroke-width="1" opacity="0.4"/>
+  <line x1="485" y1="108" x2="555" y2="116" stroke="#003300" stroke-width="1" opacity="0.4"/>
+  <ellipse cx="520" cy="80" rx="70" ry="55" fill="url(#screen_glow1)" class="anim-glow"/>
+  <!-- Biohazard marking on wall -->
+  <circle cx="300" cy="155" r="15" fill="none" stroke="#8b0000" stroke-width="1.5" opacity="0.4"/>
+  <circle cx="300" cy="155" r="4"  fill="#8b0000" opacity="0.3"/>
+</svg>`,
+
+campfire: `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky_cf" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#05080f"/>
+      <stop offset="100%" stop-color="#080808"/>
+    </linearGradient>
+    <radialGradient id="fire_glow_cf" cx="50%" cy="80%" r="80%">
+      <stop offset="0%" stop-color="#cc5500" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#8b0000" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#8b0000" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="fire_inner" cx="50%" cy="70%" r="50%">
+      <stop offset="0%" stop-color="#cc5500" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#8b0000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="200" fill="url(#sky_cf)"/>
+  <!-- Stars - many, clear night -->
+  <circle cx="20"  cy="10" r="1"   fill="#d4d4d4" opacity="0.7" class="anim-star1"/>
+  <circle cx="55"  cy="25" r="0.8" fill="#d4d4d4" opacity="0.5" class="anim-star2"/>
+  <circle cx="90"  cy="8"  r="1.2" fill="#d4d4d4" opacity="0.6" class="anim-star3"/>
+  <circle cx="130" cy="18" r="0.8" fill="#d4d4d4" opacity="0.4" class="anim-star1"/>
+  <circle cx="170" cy="5"  r="1"   fill="#d4d4d4" opacity="0.6" class="anim-star2"/>
+  <circle cx="210" cy="28" r="0.8" fill="#d4d4d4" opacity="0.5" class="anim-star3"/>
+  <circle cx="250" cy="12" r="1"   fill="#d4d4d4" opacity="0.7" class="anim-star1"/>
+  <circle cx="350" cy="8"  r="0.8" fill="#d4d4d4" opacity="0.5" class="anim-star2"/>
+  <circle cx="390" cy="20" r="1"   fill="#d4d4d4" opacity="0.6" class="anim-star3"/>
+  <circle cx="430" cy="6"  r="0.8" fill="#d4d4d4" opacity="0.4" class="anim-star1"/>
+  <circle cx="470" cy="25" r="1"   fill="#d4d4d4" opacity="0.7" class="anim-star2"/>
+  <circle cx="510" cy="10" r="0.8" fill="#d4d4d4" opacity="0.5" class="anim-star3"/>
+  <circle cx="550" cy="18" r="1"   fill="#d4d4d4" opacity="0.6" class="anim-star1"/>
+  <circle cx="585" cy="8"  r="0.8" fill="#d4d4d4" opacity="0.4" class="anim-star2"/>
+  <!-- Milky way suggestion -->
+  <rect x="100" y="0" width="200" height="60" fill="#d4d4d4" opacity="0.01" rx="50"/>
+  <!-- Dark ground -->
+  <rect x="0" y="150" width="600" height="50" fill="#080808"/>
+  <!-- Distant tree silhouette -->
+  <ellipse cx="50"  cy="155" rx="55" ry="40" fill="#060606"/>
+  <ellipse cx="150" cy="148" rx="45" ry="35" fill="#080808"/>
+  <ellipse cx="460" cy="150" rx="50" ry="38" fill="#060606"/>
+  <ellipse cx="560" cy="155" rx="50" ry="40" fill="#080808"/>
+  <!-- Fire glow on ground -->
+  <ellipse cx="300" cy="175" rx="180" ry="40" fill="url(#fire_glow_cf)" class="anim-glow"/>
+  <!-- Sitting figures around fire (silhouettes) -->
+  <!-- Figure 1 left far -->
+  <ellipse cx="168" cy="162" rx="12" ry="18" fill="#0a0a0a"/>
+  <circle  cx="168" cy="143" r="9"           fill="#0a0a0a"/>
+  <!-- Figure 2 left close -->
+  <ellipse cx="220" cy="168" rx="13" ry="16" fill="#0d0d0d"/>
+  <circle  cx="220" cy="151" r="10"          fill="#0d0d0d"/>
+  <!-- Figure 3 right close -->
+  <ellipse cx="380" cy="168" rx="13" ry="16" fill="#0d0d0d"/>
+  <circle  cx="380" cy="151" r="10"          fill="#0d0d0d"/>
+  <!-- Figure 4 right far -->
+  <ellipse cx="432" cy="162" rx="12" ry="18" fill="#0a0a0a"/>
+  <circle  cx="432" cy="143" r="9"           fill="#0a0a0a"/>
+  <!-- Campfire logs -->
+  <line x1="270" y1="175" x2="330" y2="168" stroke="#1a1a1a" stroke-width="5" stroke-linecap="round"/>
+  <line x1="330" y1="175" x2="270" y2="168" stroke="#1a1a1a" stroke-width="5" stroke-linecap="round"/>
+  <ellipse cx="300" cy="175" rx="35" ry="8" fill="#111"/>
+  <!-- Fire flames -->
+  <ellipse cx="300" cy="155" rx="20" ry="28" fill="url(#fire_inner)" class="anim-flicker"/>
+  <ellipse cx="290" cy="158" rx="12" ry="20" fill="#8b0000" opacity="0.6" class="anim-flicker"/>
+  <ellipse cx="310" cy="160" rx="10" ry="18" fill="#cc5500" opacity="0.5" class="anim-flicker"/>
+  <!-- Sparks -->
+  <circle cx="295" cy="138" r="1.5" fill="#cc5500" opacity="0.8" class="anim-star1"/>
+  <circle cx="308" cy="130" r="1"   fill="#cc5500" opacity="0.6" class="anim-star2"/>
+  <circle cx="285" cy="135" r="1"   fill="#8b0000" opacity="0.7" class="anim-star3"/>
+  <circle cx="315" cy="142" r="1.5" fill="#cc5500" opacity="0.5" class="anim-star1"/>
+  <!-- Fire light rim on figures (orange tint on side facing fire) -->
+  <ellipse cx="220" cy="155" rx="5" ry="14" fill="#cc5500" opacity="0.08"/>
+  <ellipse cx="380" cy="155" rx="5" ry="14" fill="#cc5500" opacity="0.08"/>
+</svg>`,
+
+};
+
+// ============================================================
+// PORTRAIT SVGs
+// ============================================================
+const PORTRAIT_SVGS = {
+
+blake: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg_bl" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a1010"/>
+      <stop offset="100%" stop-color="#0d0808"/>
+    </radialGradient>
+  </defs>
+  <circle cx="50" cy="50" r="50" fill="url(#bg_bl)"/>
+  <!-- Neck / shoulders -->
+  <ellipse cx="50" cy="105" rx="32" ry="20" fill="#0d0d0d"/>
+  <rect x="18" y="82" width="64" height="30" fill="#111" rx="4"/>
+  <!-- Military collar detail -->
+  <polygon points="35,82 50,90 65,82 65,100 35,100" fill="#0d0d0d"/>
+  <!-- Dog tag chain suggestion -->
+  <line x1="44" y1="82" x2="42" y2="95" stroke="#333" stroke-width="0.8" opacity="0.6"/>
+  <line x1="56" y1="82" x2="58" y2="95" stroke="#333" stroke-width="0.8" opacity="0.6"/>
+  <rect x="46" y="90" width="8" height="5" fill="#222" rx="0.5" opacity="0.7"/>
+  <!-- Head silhouette -->
+  <ellipse cx="50" cy="52" rx="22" ry="26" fill="#111"/>
+  <!-- Short military haircut - flat top -->
+  <ellipse cx="50" cy="30" rx="22" ry="10" fill="#0d0d0d"/>
+  <rect x="28" y="26" width="44" height="8" fill="#0d0d0d"/>
+  <!-- Jaw definition (strong) -->
+  <ellipse cx="50" cy="72" rx="18" ry="8" fill="#0d0d0d"/>
+  <!-- Eyes - intense dark slits -->
+  <ellipse cx="40" cy="52" rx="5" ry="3" fill="#0a0a0a"/>
+  <ellipse cx="60" cy="52" rx="5" ry="3" fill="#0a0a0a"/>
+  <!-- Accent: faint rust on collar -->
+  <rect x="34" y="82" width="4" height="8" fill="#cc5500" opacity="0.3" rx="1"/>
+  <rect x="62" y="82" width="4" height="8" fill="#cc5500" opacity="0.3" rx="1"/>
+</svg>`,
+
+lime: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg_li" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0d1010"/>
+      <stop offset="100%" stop-color="#080d0d"/>
+    </radialGradient>
+  </defs>
+  <circle cx="50" cy="50" r="50" fill="url(#bg_li)"/>
+  <!-- Shoulders / hoodie -->
+  <ellipse cx="50" cy="105" rx="35" ry="18" fill="#0d0d0d"/>
+  <rect x="15" y="84" width="70" height="25" fill="#111" rx="6"/>
+  <!-- Head -->
+  <ellipse cx="50" cy="52" rx="20" ry="24" fill="#111"/>
+  <!-- Ponytail -->
+  <ellipse cx="50" cy="26" rx="20" ry="8" fill="#0d0d0d"/>
+  <!-- Hair top + sides -->
+  <ellipse cx="50" cy="30" rx="21" ry="14" fill="#0d0d0d"/>
+  <!-- Ponytail back -->
+  <ellipse cx="72" cy="35" rx="8" ry="14" fill="#0a0a0a" transform="rotate(30,72,35)"/>
+  <rect x="68" y="28" width="6" height="18" fill="#0a0a0a" rx="2" transform="rotate(25,68,28)"/>
+  <!-- Hair tie -->
+  <circle cx="71" cy="38" r="3" fill="#cc5500" opacity="0.5"/>
+  <!-- Glasses frames -->
+  <rect x="34" y="50" width="13" height="9" fill="none" stroke="#333" stroke-width="1.5" rx="1"/>
+  <rect x="53" y="50" width="13" height="9" fill="none" stroke="#333" stroke-width="1.5" rx="1"/>
+  <line x1="47" y1="54" x2="53" y2="54" stroke="#333" stroke-width="1.5"/>
+  <!-- Nose bridge -->
+  <line x1="34" y1="54" x2="30" y2="54" stroke="#333" stroke-width="1"/>
+  <line x1="66" y1="54" x2="70" y2="54" stroke="#333" stroke-width="1"/>
+  <!-- Eyes behind glass -->
+  <ellipse cx="40" cy="54" rx="3" ry="2.5" fill="#0a0a0a"/>
+  <ellipse cx="59" cy="54" rx="3" ry="2.5" fill="#0a0a0a"/>
+  <!-- Glasses lens sheen -->
+  <ellipse cx="40" cy="52" rx="2" ry="1.5" fill="#d4d4d4" opacity="0.06"/>
+  <ellipse cx="59" cy="52" rx="2" ry="1.5" fill="#d4d4d4" opacity="0.06"/>
+  <!-- Young soft jaw -->
+  <ellipse cx="50" cy="70" rx="14" ry="6" fill="#0d0d0d"/>
+</svg>`,
+
+luna: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg_lu" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0a0d10"/>
+      <stop offset="100%" stop-color="#080808"/>
+    </radialGradient>
+  </defs>
+  <circle cx="50" cy="50" r="50" fill="url(#bg_lu)"/>
+  <!-- Nurse uniform collar -->
+  <ellipse cx="50" cy="105" rx="33" ry="18" fill="#0d0d0d"/>
+  <rect x="17" y="83" width="66" height="25" fill="#111" rx="4"/>
+  <!-- Cross on uniform -->
+  <rect x="46" y="86" width="8"  height="18" fill="#8b0000" opacity="0.4"/>
+  <rect x="40" y="91" width="20" height="8"  fill="#8b0000" opacity="0.4"/>
+  <!-- Head -->
+  <ellipse cx="50" cy="52" rx="20" ry="24" fill="#111"/>
+  <!-- Nurse cap -->
+  <ellipse cx="50" cy="30" rx="22" ry="8"  fill="#1a1a1a"/>
+  <rect x="28" y="26" width="44" height="10" fill="#1a1a1a" rx="2"/>
+  <rect x="30" y="24" width="40" height="5"  fill="#222"/>
+  <!-- Cap cross emblem -->
+  <rect x="47" y="25" width="6"  height="10" fill="#8b0000" opacity="0.5"/>
+  <rect x="43" y="28" width="14" height="4"  fill="#8b0000" opacity="0.5"/>
+  <!-- Medium hair under cap sides -->
+  <ellipse cx="30" cy="48" rx="8" ry="14" fill="#0d0d0d"/>
+  <ellipse cx="70" cy="48" rx="8" ry="14" fill="#0d0d0d"/>
+  <!-- Face features -->
+  <ellipse cx="40" cy="52" rx="4" ry="3"  fill="#0a0a0a"/>
+  <ellipse cx="60" cy="52" rx="4" ry="3"  fill="#0a0a0a"/>
+  <ellipse cx="50" cy="62" rx="6" ry="3"  fill="#0d0d0d"/>
+  <!-- Gentle jaw -->
+  <ellipse cx="50" cy="70" rx="15" ry="6" fill="#0d0d0d"/>
+</svg>`,
+
+evelyn: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg_ev" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0a0a0d"/>
+      <stop offset="100%" stop-color="#080808"/>
+    </radialGradient>
+  </defs>
+  <circle cx="50" cy="50" r="50" fill="url(#bg_ev)"/>
+  <!-- Lab coat collar -->
+  <ellipse cx="50" cy="105" rx="34" ry="18" fill="#0d0d0d"/>
+  <rect x="16" y="82" width="68" height="26" fill="#1a1a1a" rx="4"/>
+  <polygon points="36,82 50,92 64,82 64,108 36,108" fill="#111"/>
+  <!-- Lab coat lapels -->
+  <polygon points="36,82 50,92 50,108 36,108" fill="#151515"/>
+  <polygon points="64,82 50,92 50,108 64,108" fill="#151515"/>
+  <!-- Head silhouette -->
+  <ellipse cx="50" cy="52" rx="20" ry="24" fill="#111"/>
+  <!-- Pulled-back hair -->
+  <ellipse cx="50" cy="28" rx="20" ry="8" fill="#0d0d0d"/>
+  <rect x="30" y="24" width="40" height="14" fill="#0d0d0d"/>
+  <!-- Bun at back top -->
+  <ellipse cx="50" cy="26" rx="10" ry="6" fill="#0a0a0a"/>
+  <!-- Tight hair sides -->
+  <rect x="28" y="28" width="6" height="20" fill="#0d0d0d" rx="3"/>
+  <rect x="66" y="28" width="6" height="20" fill="#0d0d0d" rx="3"/>
+  <!-- Intelligent eyes, slightly narrower -->
+  <ellipse cx="40" cy="52" rx="4.5" ry="2.5" fill="#0a0a0a"/>
+  <ellipse cx="60" cy="52" rx="4.5" ry="2.5" fill="#0a0a0a"/>
+  <!-- Glasses (thin wire frame) -->
+  <rect x="34" y="49" width="12" height="8"  fill="none" stroke="#222" stroke-width="1" rx="1"/>
+  <rect x="54" y="49" width="12" height="8"  fill="none" stroke="#222" stroke-width="1" rx="1"/>
+  <line x1="46" y1="53" x2="54" y2="53" stroke="#222" stroke-width="1"/>
+  <!-- Subtle accent: blue-green lab glow reflected in glasses -->
+  <ellipse cx="40" cy="51" rx="3" ry="2" fill="#003300" opacity="0.2"/>
+  <ellipse cx="60" cy="51" rx="3" ry="2" fill="#003300" opacity="0.2"/>
+  <!-- Jaw - defined, mature -->
+  <ellipse cx="50" cy="70" rx="16" ry="6" fill="#0d0d0d"/>
+</svg>`,
+
+chris: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg_ch" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0d0d0a"/>
+      <stop offset="100%" stop-color="#080808"/>
+    </radialGradient>
+  </defs>
+  <circle cx="50" cy="50" r="50" fill="url(#bg_ch)"/>
+  <!-- Motorcycle jacket -->
+  <ellipse cx="50" cy="105" rx="35" ry="18" fill="#0d0d0d"/>
+  <rect x="15" y="80" width="70" height="28" fill="#111" rx="3"/>
+  <!-- Jacket collar / lapels -->
+  <polygon points="35,80 50,93 50,108 30,108 30,80" fill="#0d0d0d"/>
+  <polygon points="65,80 50,93 50,108 70,108 70,80" fill="#0d0d0d"/>
+  <!-- Jacket zipper -->
+  <line x1="50" y1="92" x2="50" y2="108" stroke="#222" stroke-width="1.5"/>
+  <!-- Collar studs -->
+  <circle cx="38" cy="83" r="2" fill="#333"/>
+  <circle cx="62" cy="83" r="2" fill="#333"/>
+  <!-- Head -->
+  <ellipse cx="50" cy="52" rx="21" ry="25" fill="#111"/>
+  <!-- Messy hair - irregular top -->
+  <ellipse cx="50" cy="28" rx="21" ry="10" fill="#0d0d0d"/>
+  <path d="M29,30 Q35,18 45,22 Q50,15 55,22 Q65,18 71,30" fill="#0a0a0a"/>
+  <!-- Hair tuft details (unruly) -->
+  <path d="M38,22 Q40,14 44,20" fill="#0a0a0a"/>
+  <path d="M55,20 Q58,13 62,22" fill="#0a0a0a"/>
+  <!-- Goggles pushed up on forehead -->
+  <ellipse cx="40" cy="37" rx="9" ry="6" fill="#1a1a1a" rx="2"/>
+  <ellipse cx="60" cy="37" rx="9" ry="6" fill="#1a1a1a" rx="2"/>
+  <line x1="49" y1="37" x2="51" y2="37" stroke="#1a1a1a" stroke-width="2"/>
+  <!-- Goggle lenses (amber tint) -->
+  <ellipse cx="40" cy="37" rx="7" ry="4.5" fill="#cc5500" opacity="0.15"/>
+  <ellipse cx="60" cy="37" rx="7" ry="4.5" fill="#cc5500" opacity="0.15"/>
+  <!-- Goggle strap -->
+  <line x1="29" y1="37" x2="24" y2="40" stroke="#1a1a1a" stroke-width="2"/>
+  <line x1="71" y1="37" x2="76" y2="40" stroke="#1a1a1a" stroke-width="2"/>
+  <!-- Eyes under goggles line -->
+  <ellipse cx="40" cy="53" rx="4" ry="3" fill="#0a0a0a"/>
+  <ellipse cx="60" cy="53" rx="4" ry="3" fill="#0a0a0a"/>
+  <!-- Jaw - rough, slight stubble area -->
+  <ellipse cx="50" cy="71" rx="17" ry="7" fill="#0d0d0d"/>
+  <ellipse cx="50" cy="68" rx="12" ry="3" fill="#0a0a0a" opacity="0.5"/>
+</svg>`,
+
+};
+
+// ============================================================
+// NODE -> SCENE MAPPING
+// ============================================================
+const NODE_SCENES = {
+  start: 'city_ruins',
+  shelter_villa: 'villa',
+  shelter_bunker: 'bunker',
+  day1: 'street',
+  day1_investigate: 'street',
+  day1_hide: 'street',
+  day2_blake_join: 'campfire',
+  day2_alone: 'street',
+  day3_supermarket: 'supermarket',
+  day3_hospital: 'hospital',
+  day4_lime_join: 'campfire',
+  day4_no_lime: 'street',
+  day4_explore: 'city_ruins',
+  day4_shelter_work: 'villa',
+  day7_explore: 'city_ruins',
+  day7_shelter: 'villa',
+  day7_luna: 'campfire',
+  day10_signal: 'city_ruins',
+  day10_loot: 'city_ruins',
+  day15_dawn_approach: 'dawn_camp',
+  day15_dawn_enter: 'dawn_camp',
+  day15_dawn_sneak: 'dawn_camp',
+  day15_crisis: 'horde',
+  day20_camp_life: 'dawn_camp',
+  day20_trade_leave: 'street',
+  day20_recovery: 'city_ruins',
+  day20_blake_sacrifice: 'horde',
+  day25_expedition: 'military_base',
+  day25_camp_stay: 'dawn_camp',
+  day25_wandering: 'forest',
+  day30_hero: 'dawn_camp',
+  day30_selfish: 'dawn_camp',
+  day30_peace: 'dawn_camp',
+  day30_fight: 'dawn_camp',
+  day30_bunker: 'lab',
+  day30_road: 'forest',
+  day30_checkpoint: 'city_ruins',
+  day30_end: 'city_ruins',
+  day35_horde_warning: 'horde',
+  day40_fortify: 'dawn_camp',
+  day40_evacuate: 'forest',
+  day40_scout: 'horde',
+  day40_airdrop: 'military_base',
+  day45_siege_prep: 'dawn_camp',
+  day45_factory: 'military_base',
+  day45_horde_secret: 'horde',
+  day45_airdrop_fight: 'military_base',
+  day45_airdrop_share: 'campfire',
+  day45_airdrop_intel: 'lab',
+  day45_evelyn_secret: 'campfire',
+  day45_scientist: 'lab',
+  day50_horde_arrives: 'horde',
+  day55_battle: 'horde',
+  day55_redirect: 'horde',
+  day55_flee: 'forest',
+  day60_aftermath: 'campfire',
+  day60_hunt_alpha: 'lab',
+  day60_evelyn_romance: 'campfire',
+  day65_planning: 'dawn_camp',
+  day65_lab: 'lab',
+  day65_kill_alpha: 'lab',
+  day70_vaccine_path: 'lab',
+  day70_ark_path: 'coast',
+  day70_lone_path: 'forest',
+  day80_vaccine_defense: 'lab',
+  day80_vaccine_broadcast: 'dawn_camp',
+  day80_ark_coast: 'coast',
+  day80_ark_caravan: 'coast',
+  day80_wilderness: 'forest',
+  day80_wanderer: 'forest',
+  ending_savior: 'lab',
+  ending_adam_eve: 'coast',
+  ending_lone_wolf: 'forest',
+};
+
+const COMPANION_PORTRAITS = {
+  '布莱克': 'blake',
+  '莱姆': 'lime',
+  '露娜': 'luna',
+  '伊芙琳': 'evelyn',
+  '克里斯': 'chris',
+};
+
+function renderScene(nodeId) {
+  const sceneArea = document.getElementById('scene-area');
+  const portraitStrip = document.getElementById('portrait-strip');
+  if (!sceneArea || !portraitStrip) return;
+
+  const sceneKey = NODE_SCENES[nodeId] || 'city_ruins';
+  const svg = SCENE_SVGS[sceneKey] || SCENE_SVGS.city_ruins;
+  sceneArea.innerHTML = '<div class="scene-container">' + svg + '</div>';
+
+  if (G.companions && G.companions.length > 0) {
+    portraitStrip.innerHTML = '';
+    G.companions.forEach(function(name) {
+      const key = COMPANION_PORTRAITS[name];
+      if (key && PORTRAIT_SVGS[key]) {
+        const card = document.createElement('div');
+        card.className = 'portrait-card';
+        card.innerHTML = '<div class="portrait-frame active">' + PORTRAIT_SVGS[key] + '</div><div class="portrait-name">' + name + '</div>';
+        portraitStrip.appendChild(card);
+      }
+    });
+  } else {
+    portraitStrip.innerHTML = '';
+  }
+}
+
+// ============================================================
+// AUDIO ENGINE (Web Audio API procedural music)
+// ============================================================
+let audioCtx = null;
+let musicEnabled = false;
+let currentMood = null;
+let audioNodes = [];   // active nodes for cleanup
+let musicGain = null;  // master gain
+let musicFadeInterval = null;
+
+// Scene -> mood mapping
+const SCENE_MOODS = {
+  city_ruins: 'desolate',
+  villa: 'ambient',
+  bunker: 'ambient',
+  street: 'desolate',
+  supermarket: 'tension',
+  hospital: 'tension',
+  dawn_camp: 'hope',
+  military_base: 'tension',
+  horde: 'combat',
+  forest: 'ambient',
+  coast: 'hope',
+  lab: 'tension',
+  campfire: 'warmth',
+};
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  musicGain = audioCtx.createGain();
+  musicGain.gain.value = 0;
+  musicGain.connect(audioCtx.destination);
+}
+
+function toggleMusic() {
+  if (!audioCtx) initAudio();
+  musicEnabled = !musicEnabled;
+  updateMusicButtons();
+  if (musicEnabled) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const sceneKey = NODE_SCENES[G.currentNode] || 'city_ruins';
+    const mood = SCENE_MOODS[sceneKey] || 'ambient';
+    switchMood(mood);
+  } else {
+    stopAllMusic();
+  }
+}
+
+function updateMusicButtons() {
+  const titleBtn = document.getElementById('music-toggle-title');
+  const gameBtn = document.getElementById('music-toggle-game');
+  if (titleBtn) titleBtn.innerHTML = musicEnabled ? '🔊 音乐：开' : '🔇 音乐：关';
+  if (gameBtn) gameBtn.textContent = musicEnabled ? '🔊' : '🔇';
+}
+
+function stopAllMusic() {
+  audioNodes.forEach(n => {
+    try { n.stop && n.stop(); } catch(e) {}
+    try { n.disconnect(); } catch(e) {}
+  });
+  audioNodes = [];
+  if (musicGain) musicGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.3);
+  currentMood = null;
+}
+
+function playMoodForScene(nodeId) {
+  if (!musicEnabled || !audioCtx) return;
+  const sceneKey = NODE_SCENES[nodeId] || 'city_ruins';
+  const mood = SCENE_MOODS[sceneKey] || 'ambient';
+  if (mood !== currentMood) {
+    switchMood(mood);
+  }
+}
+
+function switchMood(mood) {
+  if (!audioCtx || !musicEnabled) return;
+  // Fade out current
+  if (musicGain) musicGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.8);
+  setTimeout(() => {
+    stopAllMusic();
+    currentMood = mood;
+    // Fade in new
+    musicGain.gain.setTargetAtTime(0.35, audioCtx.currentTime, 1.0);
+    switch(mood) {
+      case 'desolate': playDesolate(); break;
+      case 'ambient': playAmbient(); break;
+      case 'tension': playTension(); break;
+      case 'combat': playCombat(); break;
+      case 'hope': playHope(); break;
+      case 'warmth': playWarmth(); break;
+      default: playAmbient();
+    }
+  }, 900);
+}
+
+// --- Utility: create noise buffer ---
+function createNoiseBuffer(duration, type) {
+  const len = audioCtx.sampleRate * duration;
+  const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  if (type === 'brown') {
+    let last = 0;
+    for (let i = 0; i < len; i++) {
+      const white = Math.random() * 2 - 1;
+      last = (last + 0.02 * white) / 1.02;
+      data[i] = last * 3.5;
+    }
+  } else {
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+  }
+  return buf;
+}
+
+// --- Utility: play a looping drone note ---
+function playDrone(freq, type, gainVal, filterFreq) {
+  const osc = audioCtx.createOscillator();
+  osc.type = type || 'sine';
+  osc.frequency.value = freq;
+  const g = audioCtx.createGain();
+  g.gain.value = gainVal || 0.1;
+  const filt = audioCtx.createBiquadFilter();
+  filt.type = 'lowpass';
+  filt.frequency.value = filterFreq || 800;
+  filt.Q.value = 1;
+  osc.connect(filt);
+  filt.connect(g);
+  g.connect(musicGain);
+  osc.start();
+  audioNodes.push(osc, g, filt);
+  return { osc, gain: g, filter: filt };
+}
+
+// --- Utility: play filtered noise loop ---
+function playNoiseLoop(filterFreq, gainVal, type) {
+  const buf = createNoiseBuffer(4, type || 'brown');
+  const src = audioCtx.createBufferSource();
+  src.buffer = buf;
+  src.loop = true;
+  const filt = audioCtx.createBiquadFilter();
+  filt.type = 'lowpass';
+  filt.frequency.value = filterFreq || 300;
+  const g = audioCtx.createGain();
+  g.gain.value = gainVal || 0.08;
+  src.connect(filt);
+  filt.connect(g);
+  g.connect(musicGain);
+  src.start();
+  audioNodes.push(src, filt, g);
+  return { src, filter: filt, gain: g };
+}
+
+// --- Utility: simple LFO modulation ---
+function addLFO(param, rate, depth) {
+  const lfo = audioCtx.createOscillator();
+  lfo.type = 'sine';
+  lfo.frequency.value = rate;
+  const lfoGain = audioCtx.createGain();
+  lfoGain.gain.value = depth;
+  lfo.connect(lfoGain);
+  lfoGain.connect(param);
+  lfo.start();
+  audioNodes.push(lfo, lfoGain);
+}
+
+// --- Utility: play repeating melodic pattern ---
+function playMelodyLoop(notes, interval, type, gainVal, filterFreq) {
+  let idx = 0;
+  const g = audioCtx.createGain();
+  g.gain.value = 0;
+  g.connect(musicGain);
+  const filt = audioCtx.createBiquadFilter();
+  filt.type = 'lowpass';
+  filt.frequency.value = filterFreq || 1200;
+  filt.Q.value = 2;
+  filt.connect(g);
+  audioNodes.push(g, filt);
+
+  function playNote() {
+    if (!musicEnabled || currentMood === null) return;
+    const freq = notes[idx % notes.length];
+    idx++;
+    const osc = audioCtx.createOscillator();
+    osc.type = type || 'triangle';
+    osc.frequency.value = freq;
+    const noteGain = audioCtx.createGain();
+    noteGain.gain.setValueAtTime(gainVal || 0.06, audioCtx.currentTime);
+    noteGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + interval * 0.9);
+    osc.connect(noteGain);
+    noteGain.connect(filt);
+    osc.start();
+    osc.stop(audioCtx.currentTime + interval * 0.95);
+    audioNodes.push(osc, noteGain);
+    setTimeout(playNote, interval * 1000);
+  }
+  setTimeout(playNote, 500);
+}
+
+// ========== MOOD: Desolate (废墟、街道) ==========
+function playDesolate() {
+  // Deep bass drone
+  playDrone(55, 'sine', 0.12, 200);
+  // Subtle fifth
+  playDrone(82, 'sine', 0.05, 300);
+  // Wind noise
+  const wind = playNoiseLoop(250, 0.06, 'brown');
+  addLFO(wind.filter.frequency, 0.15, 100);
+  // Sparse minor melody - A minor pentatonic low register
+  playMelodyLoop([220, 196, 165, 147, 131, 147, 165, 196], 3.5, 'sine', 0.03, 600);
+  // Distant rumble
+  playDrone(35, 'sawtooth', 0.03, 80);
+}
+
+// ========== MOOD: Ambient (掩体、森林) ==========
+function playAmbient() {
+  // Warm pad
+  playDrone(65, 'sine', 0.1, 400);
+  playDrone(98, 'triangle', 0.04, 500);
+  // Soft noise (breathing room)
+  playNoiseLoop(180, 0.03, 'brown');
+  // Slow melody
+  playMelodyLoop([262, 294, 330, 294, 247, 220, 247, 262], 4.0, 'sine', 0.025, 800);
+}
+
+// ========== MOOD: Tension (超市、医院、实验室) ==========
+function playTension() {
+  // Dissonant drones - tritone
+  playDrone(73, 'sawtooth', 0.06, 300);
+  playDrone(103, 'sawtooth', 0.04, 250);
+  // Pulsing sub bass
+  const sub = playDrone(40, 'sine', 0.1, 150);
+  addLFO(sub.gain.gain, 0.5, 0.06);
+  // Harsh noise
+  const n = playNoiseLoop(400, 0.04, 'white');
+  addLFO(n.filter.frequency, 0.3, 200);
+  addLFO(n.gain.gain, 2, 0.02);
+  // Eerie high tones
+  playMelodyLoop([587, 554, 494, 466, 440, 466, 494, 554], 2.5, 'sine', 0.02, 2000);
+}
+
+// ========== MOOD: Combat (兽潮、战斗) ==========
+function playCombat() {
+  // Aggressive bass pulse
+  const bass = playDrone(55, 'sawtooth', 0.12, 200);
+  addLFO(bass.gain.gain, 2.0, 0.08);
+  // Distorted mid
+  playDrone(110, 'square', 0.04, 400);
+  // Fast rhythm via noise pulse
+  const n = playNoiseLoop(600, 0.07, 'white');
+  addLFO(n.gain.gain, 3.5, 0.05);
+  // Sub impact
+  playDrone(30, 'sine', 0.15, 60);
+  addLFO(bass.filter.frequency, 0.8, 100);
+  // Urgent melody - diminished scale
+  playMelodyLoop([220, 262, 311, 370, 311, 262, 233, 220], 1.8, 'sawtooth', 0.03, 1500);
+}
+
+// ========== MOOD: Hope (营地、海岸) ==========
+function playHope() {
+  // Major chord pad
+  playDrone(131, 'sine', 0.08, 600);  // C3
+  playDrone(165, 'sine', 0.05, 600);  // E3
+  playDrone(196, 'sine', 0.05, 600);  // G3
+  // Gentle noise
+  playNoiseLoop(200, 0.02, 'brown');
+  // Uplifting melody - C major pentatonic
+  playMelodyLoop([523, 587, 659, 784, 659, 587, 523, 440], 3.0, 'triangle', 0.035, 1200);
+}
+
+// ========== MOOD: Warmth (篝火、浪漫) ==========
+function playWarmth() {
+  // Warm fundamental
+  playDrone(110, 'sine', 0.08, 500);
+  playDrone(165, 'triangle', 0.04, 600);
+  // Crackle (fire-like noise)
+  const crackle = playNoiseLoop(1500, 0.02, 'white');
+  addLFO(crackle.gain.gain, 8, 0.015);
+  addLFO(crackle.filter.frequency, 0.2, 500);
+  // Soft brown noise (wind)
+  playNoiseLoop(120, 0.02, 'brown');
+  // Tender melody - A minor natural with resolve
+  playMelodyLoop([440, 494, 523, 494, 440, 392, 440, 523], 3.8, 'sine', 0.03, 900);
+}
+
+// === SFX: play a one-shot sound effect ===
+function playSFX(type) {
+  if (!audioCtx || !musicEnabled) return;
+  const sfxGain = audioCtx.createGain();
+  sfxGain.connect(audioCtx.destination);
+
+  if (type === 'click') {
+    sfxGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    sfxGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+    const osc = audioCtx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = 800;
+    osc.connect(sfxGain);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.1);
+  } else if (type === 'death') {
+    sfxGain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+    sfxGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 2.5);
+    const osc = audioCtx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 2.5);
+    const filt = audioCtx.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.frequency.value = 300;
+    osc.connect(filt);
+    filt.connect(sfxGain);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 2.5);
+  } else if (type === 'achievement') {
+    sfxGain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    sfxGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+    const osc = audioCtx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(523, audioCtx.currentTime);
+    osc.frequency.setValueAtTime(659, audioCtx.currentTime + 0.15);
+    osc.frequency.setValueAtTime(784, audioCtx.currentTime + 0.3);
+    osc.connect(sfxGain);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.8);
+  } else if (type === 'notify') {
+    sfxGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    sfxGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+    const osc = audioCtx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = 660;
+    osc.connect(sfxGain);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.3);
+  }
+}
+
+// ============================================================
+// DEATH SYSTEM
+// ============================================================
+function triggerDeath(cause) {
+  stopAllMusic();
+  playSFX('death');
+  const container = document.getElementById('death-container');
+
+  let reasonTitle, reasonText;
+  if (cause === 'starvation') {
+    reasonTitle = '你 死 了';
+    reasonText = `物资耗尽了。\n\n最后的罐头在三天前吃完，水在昨天喝完最后一口。你试着去找食物，但双腿已经没有力气支撑你走出据点。\n\n你靠在墙角，看着天花板上的裂缝发呆，意识逐渐模糊。末世不是被感染者杀死的——是饥饿，是绝望，是一个又一个错误的选择累积而成的终点。\n\n第 ${G.day} 天，你的旅程结束了。`;
+  } else if (cause === 'zombie') {
+    reasonText = `弹药耗尽的那一刻，你就知道这一天迟早会来。\n\n它们从暗处涌出，三具，五具，更多。你挥舞着手边能抓到的一切——铁管、椅子腿、甚至一本厚书——但那些东西挡不住潮水。\n\n最后你听到的，是自己急促的呼吸声和身后越来越近的脚步声。你没有回头。\n\n第 ${G.day} 天，弹尽粮绝，你倒在了感染者的包围中。`;
+    reasonTitle = '你 死 了';
+  }
+
+  container.innerHTML = `<div class="death-overlay">
+    <div class="death-title">${reasonTitle}</div>
+    <div class="death-reason">${reasonText.split('\n\n').map(p => `<p style="margin-bottom:0.8em">${p}</p>`).join('')}</div>
+    <div class="death-stats">生存天数：${G.day} · 人性：${G.humanity} · 同伴：${G.companions.length > 0 ? G.companions.join('、') : '无'}</div>
+    <div>
+      <button class="death-btn" onclick="deathLoadSave()">读取存档</button>
+      <button class="death-btn" onclick="deathRestart()">重新开始</button>
+    </div>
+  </div>`;
+}
+
+function deathLoadSave() {
+  document.getElementById('death-container').innerHTML = '';
+  currentSaveTab = 'load';
+  renderSaveSlots();
+  openModal('save-modal');
+}
+
+function deathRestart() {
+  document.getElementById('death-container').innerHTML = '';
+  restartGame();
+}
+
+// ============================================================
+// HISTORY LOG
+// ============================================================
+function openHistoryLog() {
+  renderHistoryLog();
+  openModal('history-modal');
+}
+
+function renderHistoryLog() {
+  const grid = document.getElementById('history-grid');
+  grid.innerHTML = '';
+
+  if (historyLog.length === 0) {
+    grid.innerHTML = '<div style="color:#555;text-align:center;padding:2em">暂无记录</div>';
+    return;
+  }
+
+  // Show in reverse order (newest first)
+  for (let i = historyLog.length - 1; i >= 0; i--) {
+    const entry = historyLog[i];
+    const div = document.createElement('div');
+    div.className = 'history-entry';
+    div.innerHTML = `
+      <div class="history-day">${entry.title}</div>
+      <div class="history-text">${entry.text.replace(/\n\n/g, ' ').substring(0, 200)}${entry.text.length > 200 ? '...' : ''}</div>
+      ${entry.choiceText ? `<div class="history-choice">▸ ${entry.choiceText}</div>` : ''}
+      ${entry.text.length > 200 ? `<span class="history-expand" onclick="toggleHistoryExpand(this, ${i})">展开全文 ▾</span>` : ''}
+    `;
+    grid.appendChild(div);
+  }
+}
+
+function toggleHistoryExpand(el, idx) {
+  const entry = historyLog[idx];
+  const card = el.closest('.history-entry');
+  const textDiv = card.querySelector('.history-text');
+
+  if (card.classList.contains('expanded')) {
+    card.classList.remove('expanded');
+    textDiv.textContent = entry.text.replace(/\n\n/g, ' ').substring(0, 200) + (entry.text.length > 200 ? '...' : '');
+    el.textContent = '展开全文 ▾';
+  } else {
+    card.classList.add('expanded');
+    textDiv.innerHTML = entry.text.split('\n\n').map(p => `<p style="margin-bottom:0.5em">${p}</p>`).join('');
+    el.textContent = '收起 ▴';
+  }
+}
+
+// ============================================================
+// ACHIEVEMENT SYSTEM
+// ============================================================
+const ACHIEVEMENTS = [
+  // --- 印记类（通过获得游戏内tokens解锁）---
+  { id: 'tk_救赎', name: '《救赎》', desc: '拯救了陌生人莱姆', icon: '🕊', cat: '印记', check: s => s.tokens.some(t => t.name === '《救赎》') },
+  { id: 'tk_牺牲', name: '《牺牲》', desc: '布莱克用生命守护了队伍', icon: '✟', cat: '印记', check: s => s.tokens.some(t => t.name === '《牺牲》') },
+  { id: 'tk_慷慨', name: '《慷慨》', desc: '将战略物资分享给营地', icon: '🤝', cat: '印记', check: s => s.tokens.some(t => t.name === '《慷慨》') },
+  { id: 'tk_和平', name: '《和平》', desc: '以谈判化解冲突', icon: '☮', cat: '印记', check: s => s.tokens.some(t => t.name === '《和平》') },
+  { id: 'tk_真相', name: '《真相》', desc: '发现病毒起源的秘密', icon: '🔬', cat: '印记', check: s => s.tokens.some(t => t.name === '《真相》') },
+  { id: 'tk_情报', name: '《情报》', desc: '选择知识而非力量', icon: '📋', cat: '印记', check: s => s.tokens.some(t => t.name === '《情报》') },
+  { id: 'tk_猎人', name: '《猎人》', desc: '发现兽潮中Alpha的秘密', icon: '🎯', cat: '印记', check: s => s.tokens.some(t => t.name === '《猎人》') },
+  { id: 'tk_信任', name: '《信任》', desc: '伊芙琳向你坦白一切', icon: '💎', cat: '印记', check: s => s.tokens.some(t => t.name === '《信任》') },
+  { id: 'tk_守护者', name: '《守护者》', desc: '用血与火守住家园', icon: '🛡', cat: '印记', check: s => s.tokens.some(t => t.name === '《守护者》') },
+  { id: 'tk_智者', name: '《智者》', desc: '以智慧化解灭顶之灾', icon: '🧠', cat: '印记', check: s => s.tokens.some(t => t.name === '《智者》') },
+  { id: 'tk_追踪者', name: '《追踪者》', desc: '追踪到一切的起点', icon: '🔍', cat: '印记', check: s => s.tokens.some(t => t.name === '《追踪者》') },
+  { id: 'tk_心动', name: '《心动》', desc: '末世中绽放的感情', icon: '❤', cat: '印记', check: s => s.tokens.some(t => t.name === '《心动》') },
+  { id: 'tk_屠龙者', name: '《屠龙者》', desc: '消灭感染源头Alpha', icon: '⚔', cat: '印记', check: s => s.tokens.some(t => t.name === '《屠龙者》') },
+  { id: 'tk_游侠', name: '《游侠》', desc: '成为废土上的传说', icon: '🌄', cat: '印记', check: s => s.tokens.some(t => t.name === '《游侠》') },
+  // --- 结局类 ---
+  { id: 'end_savior', name: '救世主', desc: '达成「救世主」结局', icon: '💉', cat: '结局', check: s => s.currentNode === 'ending_savior' },
+  { id: 'end_ark', name: '新伊甸', desc: '达成「新伊甸」结局', icon: '🚢', cat: '结局', check: s => s.currentNode === 'ending_adam_eve' },
+  { id: 'end_wolf', name: '独狼', desc: '达成「独狼」结局', icon: '🐺', cat: '结局', check: s => s.currentNode === 'ending_lone_wolf' },
+  // --- 生存类 ---
+  { id: 'surv_day30', name: '月光幸存者', desc: '存活超过30天', icon: '🌙', cat: '生存', check: s => s.day >= 30 },
+  { id: 'surv_day60', name: '老练幸存者', desc: '存活超过60天', icon: '⭐', cat: '生存', check: s => s.day >= 60 },
+  { id: 'surv_day100', name: '百日传奇', desc: '存活满100天', icon: '👑', cat: '生存', check: s => s.day >= 100 },
+  { id: 'surv_saint', name: '圣人', desc: '人性值达到90以上', icon: '😇', cat: '生存', check: s => s.humanity >= 90 },
+  { id: 'surv_cold', name: '冷血', desc: '人性值降到10以下', icon: '🥶', cat: '生存', check: s => s.humanity <= 10 },
+  { id: 'surv_hoarder', name: '囤积者', desc: '物资超过120', icon: '📦', cat: '生存', check: s => s.supplies >= 120 },
+  { id: 'surv_arsenal', name: '军火库', desc: '弹药超过50', icon: '🔫', cat: '生存', check: s => s.ammo >= 50 },
+  // --- 伙伴类 ---
+  { id: 'comp_blake', name: '战友', desc: '布莱克加入了你的队伍', icon: '🪖', cat: '伙伴', check: s => s.companions.includes('布莱克') || s.tokens.some(t => t.name === '《牺牲》') },
+  { id: 'comp_lime', name: '同行者', desc: '莱姆加入了你的队伍', icon: '🎒', cat: '伙伴', check: s => s.companions.includes('莱姆') },
+  { id: 'comp_luna', name: '白衣天使', desc: '露娜加入了你的队伍', icon: '🩺', cat: '伙伴', check: s => s.companions.includes('露娜') },
+  { id: 'comp_evelyn', name: '秘密与救赎', desc: '伊芙琳加入了你的队伍', icon: '🧪', cat: '伙伴', check: s => s.companions.includes('伊芙琳') },
+  { id: 'comp_chris', name: '快递侠', desc: '克里斯加入了你的队伍', icon: '🏍', cat: '伙伴', check: s => s.companions.includes('克里斯') },
+  { id: 'comp_full', name: '大家庭', desc: '同时拥有3个以上同伴', icon: '👥', cat: '伙伴', check: s => s.companions.length >= 3 },
+  // --- 探索类 ---
+  { id: 'expl_villa', name: '豪宅求生', desc: '选择别墅作为据点', icon: '🏠', cat: '探索', check: s => s.flags.shelter === 'villa' },
+  { id: 'expl_bunker', name: '地下蛰伏', desc: '选择掩体作为据点', icon: '🕳', cat: '探索', check: s => s.flags.shelter === 'bunker' },
+  { id: 'expl_fortify', name: '铜墙铁壁', desc: '加固了据点防御', icon: '🏰', cat: '探索', check: s => !!s.flags.fortified },
+  { id: 'expl_lab', name: '深渊凝视', desc: '发现了地下实验室', icon: '🧫', cat: '探索', check: s => !!s.flags.found_lab },
+  { id: 'expl_ark', name: '方舟线索', desc: '获知方舟计划的存在', icon: '📡', cat: '探索', check: s => !!s.flags.knows_ark },
+];
+
+const ACHV_STORAGE_KEY = 'zjbt_achievements';
+
+function loadUnlockedAchievements() {
+  try {
+    const raw = localStorage.getItem(ACHV_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+function saveUnlockedAchievements(unlocked) {
+  try { localStorage.setItem(ACHV_STORAGE_KEY, JSON.stringify(unlocked)); } catch {}
+}
+
+function checkAndUnlockAchievements() {
+  const unlocked = loadUnlockedAchievements();
+  let newlyUnlocked = [];
+  ACHIEVEMENTS.forEach(a => {
+    if (!unlocked[a.id] && a.check(G)) {
+      unlocked[a.id] = { time: new Date().toLocaleString('zh-CN'), day: G.day };
+      newlyUnlocked.push(a);
+    }
+  });
+  if (newlyUnlocked.length > 0) {
+    saveUnlockedAchievements(unlocked);
+    newlyUnlocked.forEach(a => {
+      showAchievementToast(a);
+    });
+  }
+}
+
+function showAchievementToast(a) {
+  playSFX('achievement');
+  const container = document.getElementById('notification-container');
+  const el = document.createElement('div');
+  el.className = 'notif info';
+  el.style.borderLeftColor = 'gold';
+  el.style.color = 'gold';
+  el.innerHTML = `🏆 成就解锁：${a.name}`;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+let achvFilter = '全部';
+
+function openAchievements() {
+  achvFilter = '全部';
+  renderAchievements();
+  openModal('achv-modal');
+}
+
+function renderAchievements() {
+  const unlocked = loadUnlockedAchievements();
+  const grid = document.getElementById('achv-grid');
+  const filtersEl = document.getElementById('achv-filters');
+  const progressEl = document.getElementById('achv-progress');
+
+  // Filters
+  const cats = ['全部', '印记', '结局', '生存', '伙伴', '探索'];
+  filtersEl.innerHTML = '';
+  cats.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'achv-filter' + (achvFilter === c ? ' active' : '');
+    const count = c === '全部' ? ACHIEVEMENTS.length : ACHIEVEMENTS.filter(a => a.cat === c).length;
+    const uCount = c === '全部' ? Object.keys(unlocked).length : ACHIEVEMENTS.filter(a => a.cat === c && unlocked[a.id]).length;
+    btn.textContent = `${c} ${uCount}/${count}`;
+    btn.onclick = () => { achvFilter = c; renderAchievements(); };
+    filtersEl.appendChild(btn);
+  });
+
+  // Grid
+  const filtered = achvFilter === '全部' ? ACHIEVEMENTS : ACHIEVEMENTS.filter(a => a.cat === achvFilter);
+  grid.innerHTML = '';
+  filtered.forEach(a => {
+    const isUnlocked = !!unlocked[a.id];
+    const card = document.createElement('div');
+    card.className = 'achv-card ' + (isUnlocked ? 'unlocked' : 'locked');
+    card.innerHTML = `
+      <div class="achv-icon">${isUnlocked ? a.icon : '🔒'}</div>
+      <div class="achv-info">
+        <div class="achv-name">${isUnlocked ? a.name : '???'}</div>
+        <div class="achv-desc">${isUnlocked ? a.desc : '未解锁'}</div>
+        ${isUnlocked && unlocked[a.id].time ? `<div class="achv-desc" style="margin-top:0.15em;color:#555">解锁于 ${unlocked[a.id].time}</div>` : ''}
+      </div>
+      <div class="achv-badge ${isUnlocked ? 'done' : 'lock'}">${isUnlocked ? '已解锁' : '锁定'}</div>
+    `;
+    grid.appendChild(card);
+  });
+
+  // Progress
+  const total = ACHIEVEMENTS.length;
+  const done = Object.keys(unlocked).length;
+  const pct = total > 0 ? Math.round(done / total * 100) : 0;
+  progressEl.innerHTML = `
+    <div class="achv-progress-text">总进度：<b>${done}</b> / ${total}（${pct}%）</div>
+    <div class="achv-bar-bg"><div class="achv-bar-fill" style="width:${pct}%"></div></div>
+  `;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  // Check for saves to show "继续游戏" button
+  if (hasAnySave()) {
+    document.getElementById('continue-btn').style.display = '';
+  }
+
+  // Close modals on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) overlay.classList.remove('open');
+    });
+  });
+});
+</script>
+</body>
+</html>
